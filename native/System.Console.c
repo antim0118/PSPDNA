@@ -35,22 +35,26 @@
 
 #endif
 
-tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
+tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue)
+{
 	HEAP_PTR string;
 	STRING2 str;
 	U32 i, strLen;
 
 	string = *(HEAP_PTR*)pParams;
-	if (string != NULL) {
+	if (string != NULL)
+	{
 #define SUB_LEN 128
-		unsigned char str8[SUB_LEN+1];
+		unsigned char str8[SUB_LEN + 1];
 		U32 start = 0;
 		str = SystemString_GetString(string, &strLen);
-		while (strLen > 0) {
-			U32 thisLen = (strLen > SUB_LEN)?SUB_LEN:strLen;
-			for (i=0; i<thisLen; i++) {
-				unsigned char c = str[start+i] & 0xff;
-				str8[i] = c?c:'?';
+		while (strLen > 0)
+		{
+			U32 thisLen = (strLen > SUB_LEN) ? SUB_LEN : strLen;
+			for (i = 0; i < thisLen; i++)
+			{
+				unsigned char c = str[start + i] & 0xff;
+				str8[i] = c ? c : '?';
 			}
 			str8[i] = 0;
 			printf(str8);
@@ -83,12 +87,12 @@ static U32 Internal_ReadKey_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAs
 		fd_set readfds;
 		int res;
 		U8 c;
-		
+
 		tv_timeout.tv_sec = 0;
 		tv_timeout.tv_usec = 0;
 		FD_ZERO(&readfds);
 		FD_SET(STDIN_FILENO, &readfds);
-		
+
 		res = select(FD_SETSIZE, &readfds, NULL, NULL, &tv_timeout);
 		if (res <= 0) {
 			// timeout
