@@ -60,6 +60,7 @@ corelib: fonts res
 	mkdir -p $(BUILD_DIR)/apps
 
 fonts:
+	mkdir -p $(BUILD_DIR)/Fonts
 	cp -R native/fonts $(BUILD_DIR)/Fonts
 
 res: simpleres flappyres rockbound2res
