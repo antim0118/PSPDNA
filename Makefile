@@ -6,9 +6,9 @@ BUILD_DIR = build
 # dot net stuff
 DOTNET = dotnet
 DOTNETFLAGS = build
-CSC = csc
+CSC = mcs #csc
 CSCLIBS = $(BUILD_DIR)/corlib.dll
-CSCFLAGS = -nostdlib -target:Exe -unsafe -langversion:7.3 -nullable:disable -deterministic -optimize- -nologo -noconfig
+CSCFLAGS = -nostdlib -target:exe -unsafe -langversion:7.2 -deterministic -optimize- -nologo -noconfig
 
 #psp stuff
 TARGET = dna
@@ -28,30 +28,26 @@ OBJS = \
 	native/controls.o native/Psp.Debug.o native/Psp.Controls.o  native/Psp.Display.o native/Psp.Kernel.o \
 	native/graph.o native/Psp.BasicGraphics.o native/Psp.BasicGraphics2.o 
 
-CFLAGS = -Os -I. -g -G3 -D__PSP__ #-Wall -Werror 
-CXXFLAGS = $(CFLAGS) -std=c++14 -fno-rtti  #-fn0-exception
+INCDIR   := $(INCDIR) . $(PSPSDK)/include
+CFLAGS = -Wall -O2#-Os -I. -g -G3 -D__PSP__ #-Wall -Werror 
+CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 
-INCDIR   := $(INCDIR) . $(PSPSDK)/include
 LIBDIR   := $(LIBDIR) . $(PSPSDK)/lib
-
+LDFLAGS =
 BUILD_PRX = 1
-PSP_FW_VERSION = 500 #371
-PSP_LARGE_MEMORY = 1
+
+
+LIBS = -lSDL2 -lSDL2_ttf -lfreetype -lGL -lGLU -lglut -lz -lpspvfpu -lpsphprm -lpspsdk -lpspctrl -lpspumd -lpsprtc \
+       -lpsppower -lpspgum -lpspgu -lpspaudiolib -lpspaudio -lpsphttp -lpspssl -lpspwlan \
+	   -lpspnet_adhocmatching -lpspnet_adhoc -lpspnet_adhocctl -lm -lpspvram -lharfbuzz -lbz2 -lpng
 
 EXTRA_TARGETS = EBOOT.PBP
 PSP_EBOOT_TITLE = DotNet Anywhere
-PSP_EBOOT_ICON = native/ICON0.PNG
-
-PSPSDK=$(shell psp-config --pspsdk-path)
-
-LIBS += -lSDL2 -lSDL2_ttf -lfreetype -lGL -lGLU -lglut -lz -lpspvfpu -lpsphprm -lpspsdk -lpspctrl -lpspumd -lpsprtc \
-       -lpsppower -lpspgum -lpspgu -lpspaudiolib -lpspaudio -lpsphttp -lpspssl -lpspwlan \
-	   -lpspnet_adhocmatching -lpspnet_adhoc -lpspnet_adhocctl -lm -lpspvram
+# PSP_EBOOT_ICON = native/ICON0.PNG
 
 # PSP boiler plate config
-
-include pspbuild.mak
+PSPSDK=$(shell psp-config --pspsdk-path)
 
 # the main build engine:
 
@@ -136,6 +132,8 @@ cleandna:
 	
 .PHONY: clean
 
-clean: cleannative cleandna
+# clean: cleannative cleandna
 
-rebuild: clean all
+rebuild: cleandna clean all
+
+include $(PSPSDK)/lib/build.mak
