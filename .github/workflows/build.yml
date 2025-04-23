@@ -16,7 +16,7 @@ jobs:
     - name: Install PSPSDK dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
+        sudo apt-get install -y --no-install-recommends \
         build-essential cmake pkgconf \
         libreadline8 libusb-0.1 libgpgme11 \
         libarchive-tools fakeroot wget
