@@ -6,8 +6,8 @@
 
 // rewrote this based on GFX.c
 
-color_t *draw_buffer;
-color_t *disp_buffer;
+color_t* draw_buffer;
+color_t* disp_buffer;
 
 const int screenb_w = 512;
 const int screen_w = 480;
@@ -18,7 +18,7 @@ int depth = 4;
 void initGraf()
 {
     draw_buffer = sceGeEdramGetAddr();
-    disp_buffer = (color_t *)(sceGeEdramGetAddr() + (bsize * depth));
+    disp_buffer = (color_t*)(sceGeEdramGetAddr() + (bsize * depth));
 
     sceDisplaySetMode(0, screen_w, screen_h);
     sceDisplaySetFrameBuf(disp_buffer, screenb_w, PSP_DISPLAY_PIXEL_FORMAT_8888, PSP_DISPLAY_SETBUF_NEXTFRAME);
@@ -34,7 +34,7 @@ void clearGraf(color_t color)
 
 void swapBufferdGraf()
 {
-    color_t *temp = disp_buffer;
+    color_t* temp = disp_buffer;
     disp_buffer = draw_buffer;
     draw_buffer = temp;
 

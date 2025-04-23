@@ -56,7 +56,7 @@ PSP_HEAP_SIZE_MAX();
 #define printf pspDebugScreenPrintf
 #endif
 
-int dna_main(int argc, char **argp);
+int dna_main(int argc, char** argp);
 
 static void ShowUsage()
 {
@@ -69,18 +69,18 @@ static void ShowUsage()
 	exit(1);
 }
 
-int run(char *name)
+int run(char* name)
 {
 	// because DNA is command line, we need to inject the
 	// path to the app.exe...
-	char *args[2];
+	char* args[2];
 	args[0] = NULL;
 	args[1] = name;
 
-	return dna_main(2, (char**) & args);
+	return dna_main(2, (char**)&args);
 }
 
-extern char *pAppName;
+extern char* pAppName;
 const char APP_MENU[] = "Dna.AppMenu.exe";
 const char APP_LEGACY[] = "app.exe";
 
@@ -88,7 +88,7 @@ const char APP_LEGACY[] = "app.exe";
 #define F_OK 0
 #endif
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 	initLogfile();
 
@@ -167,10 +167,10 @@ int main(int argc, char *argv[])
 
 static uint8_t wasInitialised = 0;
 
-int dna_main(int argc, char **argp)
+int dna_main(int argc, char** argp)
 {
-	tCLIFile *pCLIFile;
-	char *pFileName;
+	tCLIFile* pCLIFile;
+	char* pFileName;
 	U32 i;
 	I32 retValue;
 #ifdef DIAG_TOTAL_TIME
@@ -254,7 +254,6 @@ int dna_main(int argc, char **argp)
 		printf("File %s has no entry point, skipping execution\n", pFileName);
 		retValue = 0;
 	}
-
 #ifdef DIAG_TOTAL_TIME
 	printf("\nTotal execution time = %d ms\n", (int)((microTime() - startTime) / 1000));
 #endif
@@ -267,25 +266,25 @@ int dna_main(int argc, char **argp)
 	{
 		U32 numMethods, i;
 		I32 howMany = 25;
-		tMetaData *pCorLib;
+		tMetaData* pCorLib;
 		// Report on most-used methods
 		pCorLib = CLIFile_GetMetaDataForAssembly("mscorlib");
 		numMethods = pCorLib->tables.numRows[MD_TABLE_METHODDEF];
 		printf("\nCorLib method usage:\n");
 		for (; howMany > 0; howMany--)
 		{
-			tMD_MethodDef *pMethod;
+			tMD_MethodDef* pMethod;
 			U32 maxCount = 0, maxIndex = 0;
 			for (i = 1; i <= numMethods; i++)
 			{
-				pMethod = (tMD_MethodDef *)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, i));
+				pMethod = (tMD_MethodDef*)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, i));
 				if (pMethod->callCount > maxCount)
 				{
 					maxCount = pMethod->callCount;
 					maxIndex = i;
 				}
 			}
-			pMethod = (tMD_MethodDef *)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, maxIndex));
+			pMethod = (tMD_MethodDef*)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, maxIndex));
 			printf("%d: %s (%d)\n", (int)pMethod->callCount, Sys_GetMethodDesc(pMethod), (int)(pMethod->totalTime / 1000));
 			pMethod->callCount = 0;
 		}
@@ -294,26 +293,26 @@ int dna_main(int argc, char **argp)
 	{
 		U32 numMethods, i;
 		I32 howMany = 25;
-		tMetaData *pCorLib;
+		tMetaData* pCorLib;
 		// Report on most-used methods
 		pCorLib = CLIFile_GetMetaDataForAssembly("mscorlib");
 		numMethods = pCorLib->tables.numRows[MD_TABLE_METHODDEF];
 		printf("\nCorLib method execution time:\n");
 		for (; howMany > 0; howMany--)
 		{
-			tMD_MethodDef *pMethod;
+			tMD_MethodDef* pMethod;
 			U64 maxTime = 0;
 			U32 maxIndex = 0;
 			for (i = 1; i <= numMethods; i++)
 			{
-				pMethod = (tMD_MethodDef *)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, i));
+				pMethod = (tMD_MethodDef*)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, i));
 				if (pMethod->totalTime > maxTime)
 				{
 					maxTime = pMethod->totalTime;
 					maxIndex = i;
 				}
 			}
-			pMethod = (tMD_MethodDef *)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, maxIndex));
+			pMethod = (tMD_MethodDef*)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, maxIndex));
 			printf("%d: %s (%d)\n", (int)pMethod->callCount, Sys_GetMethodDesc(pMethod), (int)(pMethod->totalTime / 1000));
 			pMethod->totalTime = 0;
 		}
@@ -338,7 +337,7 @@ int dna_main(int argc, char **argp)
 				}
 			}
 			printf("0x%03x: %dms (used %d times) (ave = %d)\n",
-				   maxIndex, (int)(maxTime / 1000), (int)opcodeNumUses[maxIndex], (int)(maxTime / opcodeNumUses[maxIndex]));
+				maxIndex, (int)(maxTime / 1000), (int)opcodeNumUses[maxIndex], (int)(maxTime / opcodeNumUses[maxIndex]));
 			opcodeTimes[maxIndex] = 0;
 		}
 	}

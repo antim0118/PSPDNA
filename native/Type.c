@@ -36,18 +36,19 @@
 #include "Thread.h"
 
 typedef struct tArrayTypeDefs_ tArrayTypeDefs;
-struct tArrayTypeDefs_ {
-	tMD_TypeDef *pArrayType;
-	tMD_TypeDef *pElementType;
+struct tArrayTypeDefs_
+{
+	tMD_TypeDef* pArrayType;
+	tMD_TypeDef* pElementType;
 
-	tArrayTypeDefs *pNext;
+	tArrayTypeDefs* pNext;
 };
 
-static tArrayTypeDefs *pArrays;
+static tArrayTypeDefs* pArrays;
 
 #define GENERICARRAYMETHODS_NUM 13
 static U8 genericArrayMethodsInited = 0;
-static tMD_MethodDef *ppGenericArrayMethods[GENERICARRAYMETHODS_NUM];
+static tMD_MethodDef* ppGenericArrayMethods[GENERICARRAYMETHODS_NUM];
 
 #define GENERICARRAYMETHODS_Internal_GetGenericEnumerator 0
 #define GENERICARRAYMETHODS_get_Length 1
@@ -62,7 +63,7 @@ static tMD_MethodDef *ppGenericArrayMethods[GENERICARRAYMETHODS_NUM];
 #define GENERICARRAYMETHODS_Internal_GenericRemoveAt 10
 #define GENERICARRAYMETHODS_Internal_GenericGetItem 11
 #define GENERICARRAYMETHODS_Internal_GenericSetItem 12
-static char *pGenericArrayMethodsInit[GENERICARRAYMETHODS_NUM] = {
+static char* pGenericArrayMethodsInit[GENERICARRAYMETHODS_NUM] = {
 	"Internal_GetGenericEnumerator",
 	"get_Length",
 	"Internal_GenericIsReadOnly",
@@ -78,22 +79,26 @@ static char *pGenericArrayMethodsInit[GENERICARRAYMETHODS_NUM] = {
 	"Internal_GenericSetItem",
 };
 
-static void GetMethodDefs() {
+static void GetMethodDefs()
+{
 	IDX_TABLE token, last;
-	tMetaData *pMetaData;
+	tMetaData* pMetaData;
 
 	pMetaData = types[TYPE_SYSTEM_ARRAY_NO_TYPE]->pMetaData;
-	last = types[TYPE_SYSTEM_ARRAY_NO_TYPE]->isLast?
-		MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, pMetaData->tables.numRows[MD_TABLE_METHODDEF]):
+	last = types[TYPE_SYSTEM_ARRAY_NO_TYPE]->isLast ?
+		MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, pMetaData->tables.numRows[MD_TABLE_METHODDEF]) :
 		(types[TYPE_SYSTEM_ARRAY_NO_TYPE][1].methodList - 1);
 	token = types[TYPE_SYSTEM_ARRAY_NO_TYPE]->methodList;
-	for (; token <= last; token++) {
-		tMD_MethodDef *pMethod;
+	for (; token <= last; token++)
+	{
+		tMD_MethodDef* pMethod;
 		U32 i;
 
 		pMethod = (tMD_MethodDef*)MetaData_GetTableRow(pMetaData, token);
-		for (i=0; i<GENERICARRAYMETHODS_NUM; i++) {
-			if (strcmp(pMethod->name, pGenericArrayMethodsInit[i]) == 0) {
+		for (i = 0; i < GENERICARRAYMETHODS_NUM; i++)
+		{
+			if (strcmp(pMethod->name, pGenericArrayMethodsInit[i]) == 0)
+			{
 				ppGenericArrayMethods[i] = pMethod;
 				break;
 			}
@@ -103,7 +108,8 @@ static void GetMethodDefs() {
 	genericArrayMethodsInited = 1;
 }
 
-static void CreateNewArrayType(tMD_TypeDef *pNewArrayType, tMD_TypeDef *pElementType, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) {
+static void CreateNewArrayType(tMD_TypeDef* pNewArrayType, tMD_TypeDef* pElementType, tMD_TypeDef** ppClassTypeArgs, tMD_TypeDef** ppMethodTypeArgs)
+{
 	MetaData_Fill_TypeDef(types[TYPE_SYSTEM_ARRAY_NO_TYPE], NULL, NULL);
 
 	memcpy(pNewArrayType, types[TYPE_SYSTEM_ARRAY_NO_TYPE], sizeof(tMD_TypeDef));
@@ -112,12 +118,13 @@ static void CreateNewArrayType(tMD_TypeDef *pNewArrayType, tMD_TypeDef *pElement
 
 	// Auto-generate the generic interfaces IEnumerable<T>, ICollection<T> and IList<T> for this array
 	{
-		tInterfaceMap *pInterfaceMap, *pAllIMs;
-		tMD_TypeDef *pInterfaceT;
-		tMD_MethodDef *pMethod;
+		tInterfaceMap* pInterfaceMap, * pAllIMs;
+		tMD_TypeDef* pInterfaceT;
+		tMD_MethodDef* pMethod;
 		U32 orgNumInterfaces;
 
-		if (genericArrayMethodsInited == 0) {
+		if (genericArrayMethodsInited == 0)
+		{
 			GetMethodDefs();
 		}
 
@@ -167,16 +174,20 @@ static void CreateNewArrayType(tMD_TypeDef *pNewArrayType, tMD_TypeDef *pElement
 }
 
 // Returns a TypeDef for an array to the given element type
-tMD_TypeDef* Type_GetArrayTypeDef(tMD_TypeDef *pElementType, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) {
-	tArrayTypeDefs *pIterArrays;
+tMD_TypeDef* Type_GetArrayTypeDef(tMD_TypeDef* pElementType, tMD_TypeDef** ppClassTypeArgs, tMD_TypeDef** ppMethodTypeArgs)
+{
+	tArrayTypeDefs* pIterArrays;
 
-	if (pElementType == NULL) {
+	if (pElementType == NULL)
+	{
 		return types[TYPE_SYSTEM_ARRAY_NO_TYPE];
 	}
-	
+
 	pIterArrays = pArrays;
-	while (pIterArrays != NULL) {
-		if (pIterArrays->pElementType == pElementType) {
+	while (pIterArrays != NULL)
+	{
+		if (pIterArrays->pElementType == pElementType)
+		{
 			return pIterArrays->pArrayType;
 		}
 		pIterArrays = pIterArrays->pNext;
@@ -194,17 +205,22 @@ tMD_TypeDef* Type_GetArrayTypeDef(tMD_TypeDef *pElementType, tMD_TypeDef **ppCla
 	return pIterArrays->pArrayType;
 }
 
-U32 Type_IsValueType(tMD_TypeDef *pTypeDef) {
+U32 Type_IsValueType(tMD_TypeDef* pTypeDef)
+{
 	// If this type is an interface, then return 0
-	if (TYPE_ISINTERFACE(pTypeDef)) {
+	if (TYPE_ISINTERFACE(pTypeDef))
+	{
 		return 0;
 	}
 	// If this type is Object or ValueType then return an answer
-	if (strcmp(pTypeDef->nameSpace, "System") == 0) {
-		if (strcmp(pTypeDef->name, "ValueType") == 0) {
+	if (strcmp(pTypeDef->nameSpace, "System") == 0)
+	{
+		if (strcmp(pTypeDef->name, "ValueType") == 0)
+		{
 			return 1;
 		}
-		if (strcmp(pTypeDef->name, "Object") == 0) {
+		if (strcmp(pTypeDef->name, "Object") == 0)
+		{
 			return 0;
 		}
 	}
@@ -218,130 +234,139 @@ U32 Type_IsValueType(tMD_TypeDef *pTypeDef) {
 // Also get the size of a field from the signature
 // This is needed to avoid recursive sizing of types like System.Boolean,
 // that has a field of type System.Boolean
-tMD_TypeDef* Type_GetTypeFromSig(tMetaData *pMetaData, SIG *pSig, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) {
+tMD_TypeDef* Type_GetTypeFromSig(tMetaData* pMetaData, SIG* pSig, tMD_TypeDef** ppClassTypeArgs, tMD_TypeDef** ppMethodTypeArgs)
+{
 	U32 entry;
 
 	entry = MetaData_DecodeSigEntry(pSig);
-	switch (entry) {
-		case ELEMENT_TYPE_VOID:
+	switch (entry)
+	{
+	case ELEMENT_TYPE_VOID:
+		return NULL;
+
+	case ELEMENT_TYPE_BOOLEAN:
+		return types[TYPE_SYSTEM_BOOLEAN];
+
+	case ELEMENT_TYPE_CHAR:
+		return types[TYPE_SYSTEM_CHAR];
+
+	case ELEMENT_TYPE_I1:
+		return types[TYPE_SYSTEM_SBYTE];
+
+	case ELEMENT_TYPE_U1:
+		return types[TYPE_SYSTEM_BYTE];
+
+	case ELEMENT_TYPE_I2:
+		return types[TYPE_SYSTEM_INT16];
+
+	case ELEMENT_TYPE_U2:
+		return types[TYPE_SYSTEM_UINT16];
+
+	case ELEMENT_TYPE_I4:
+		return types[TYPE_SYSTEM_INT32];
+
+	case ELEMENT_TYPE_I8:
+		return types[TYPE_SYSTEM_INT64];
+
+	case ELEMENT_TYPE_U8:
+		return types[TYPE_SYSTEM_UINT64];
+
+	case ELEMENT_TYPE_U4:
+		return types[TYPE_SYSTEM_UINT32];
+
+	case ELEMENT_TYPE_R4:
+		return types[TYPE_SYSTEM_SINGLE];
+
+	case ELEMENT_TYPE_R8:
+		return types[TYPE_SYSTEM_DOUBLE];
+
+	case ELEMENT_TYPE_STRING:
+		return types[TYPE_SYSTEM_STRING];
+
+	case ELEMENT_TYPE_PTR:
+		return types[TYPE_SYSTEM_UINTPTR];
+
+	case ELEMENT_TYPE_BYREF:
+	{
+		tMD_TypeDef* pByRefType;
+
+		// type of the by-ref parameter, don't care
+		pByRefType = Type_GetTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
+	}
+	// fall-through
+	case ELEMENT_TYPE_INTPTR:
+		return types[TYPE_SYSTEM_INTPTR];
+
+	case ELEMENT_TYPE_VALUETYPE:
+	case ELEMENT_TYPE_CLASS:
+		entry = MetaData_DecodeSigEntryToken(pSig);
+		return MetaData_GetTypeDefFromDefRefOrSpec(pMetaData, entry, ppClassTypeArgs, ppMethodTypeArgs);
+
+	case ELEMENT_TYPE_VAR:
+		entry = MetaData_DecodeSigEntry(pSig); // This is the argument number
+		if (ppClassTypeArgs == NULL)
+		{
+			// Return null here as we don't yet know what the type really is.
+			// The generic instantiation code figures this out later.
 			return NULL;
+		}
+		else
+		{
+			return ppClassTypeArgs[entry];
+		}
 
-		case ELEMENT_TYPE_BOOLEAN:
-			return types[TYPE_SYSTEM_BOOLEAN];
+	case ELEMENT_TYPE_GENERICINST:
+	{
+		tMD_TypeDef* pType;
 
-		case ELEMENT_TYPE_CHAR:
-			return types[TYPE_SYSTEM_CHAR];
+		pType = Generics_GetGenericTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
+		return pType;
+	}
 
-		case ELEMENT_TYPE_I1:
-			return types[TYPE_SYSTEM_SBYTE];
+	//case ELEMENT_TYPE_INTPTR:
+	//	return types[TYPE_SYSTEM_INTPTR];
 
-		case ELEMENT_TYPE_U1:
-			return types[TYPE_SYSTEM_BYTE];
+	case ELEMENT_TYPE_UINTPTR:
+		return types[TYPE_SYSTEM_UINTPTR];
 
-		case ELEMENT_TYPE_I2:
-			return types[TYPE_SYSTEM_INT16];
+	case ELEMENT_TYPE_OBJECT:
+		return types[TYPE_SYSTEM_OBJECT];
 
-		case ELEMENT_TYPE_U2:
-			return types[TYPE_SYSTEM_UINT16];
+	case ELEMENT_TYPE_SZARRAY:
+	{
+		tMD_TypeDef* pElementType;
 
-		case ELEMENT_TYPE_I4:
-			return types[TYPE_SYSTEM_INT32];
+		pElementType = Type_GetTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
+		return Type_GetArrayTypeDef(pElementType, ppClassTypeArgs, ppMethodTypeArgs);
+	}
 
-		case ELEMENT_TYPE_I8:
-			return types[TYPE_SYSTEM_INT64];
+	case ELEMENT_TYPE_MVAR:
+		entry = MetaData_DecodeSigEntry(pSig); // This is the argument number
+		if (ppMethodTypeArgs == NULL)
+		{
+			// Can't do anything sensible, as we don't have any type args
+			return NULL;
+		}
+		else
+		{
+			return ppMethodTypeArgs[entry];
+		}
 
-		case ELEMENT_TYPE_U8:
-			return types[TYPE_SYSTEM_UINT64];
-
-		case ELEMENT_TYPE_U4:
-			return types[TYPE_SYSTEM_UINT32];
-
-		case ELEMENT_TYPE_R4:
-			return types[TYPE_SYSTEM_SINGLE];
-
-		case ELEMENT_TYPE_R8:
-			return types[TYPE_SYSTEM_DOUBLE];
-
-		case ELEMENT_TYPE_STRING:
-			return types[TYPE_SYSTEM_STRING];
-
-		case ELEMENT_TYPE_PTR:
-			return types[TYPE_SYSTEM_UINTPTR];
-
-		case ELEMENT_TYPE_BYREF:
-			{
-				tMD_TypeDef *pByRefType;
-
-				// type of the by-ref parameter, don't care
-				pByRefType = Type_GetTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
-			}
-			// fall-through
-		case ELEMENT_TYPE_INTPTR:
-			return types[TYPE_SYSTEM_INTPTR];
-
-		case ELEMENT_TYPE_VALUETYPE:
-		case ELEMENT_TYPE_CLASS:
-			entry = MetaData_DecodeSigEntryToken(pSig);
-			return MetaData_GetTypeDefFromDefRefOrSpec(pMetaData, entry, ppClassTypeArgs, ppMethodTypeArgs);
-
-		case ELEMENT_TYPE_VAR:
-			entry = MetaData_DecodeSigEntry(pSig); // This is the argument number
-			if (ppClassTypeArgs == NULL) {
-				// Return null here as we don't yet know what the type really is.
-				// The generic instantiation code figures this out later.
-				return NULL;
-			} else {
-				return ppClassTypeArgs[entry];
-			}
-
-		case ELEMENT_TYPE_GENERICINST:
-			{
-				tMD_TypeDef *pType;
-
-				pType = Generics_GetGenericTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
-				return pType;
-			}
-
-		//case ELEMENT_TYPE_INTPTR:
-		//	return types[TYPE_SYSTEM_INTPTR];
-
-		case ELEMENT_TYPE_UINTPTR:
-			return types[TYPE_SYSTEM_UINTPTR];
-
-		case ELEMENT_TYPE_OBJECT:
-			return types[TYPE_SYSTEM_OBJECT];
-
-		case ELEMENT_TYPE_SZARRAY:
-			{
-				tMD_TypeDef *pElementType;
-
-				pElementType = Type_GetTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
-				return Type_GetArrayTypeDef(pElementType, ppClassTypeArgs, ppMethodTypeArgs);
-			}
-
-		case ELEMENT_TYPE_MVAR:
-			entry = MetaData_DecodeSigEntry(pSig); // This is the argument number
-			if (ppMethodTypeArgs == NULL) {
-				// Can't do anything sensible, as we don't have any type args
-				return NULL;
-			} else {
-				return ppMethodTypeArgs[entry];
-			}
-
-		default:
-			Crash("Type_GetTypeFromSig(): Cannot handle signature element type: 0x%02x", entry);
-			FAKE_RETURN;
+	default:
+		Crash("Type_GetTypeFromSig(): Cannot handle signature element type: 0x%02x", entry);
+		FAKE_RETURN;
 	}
 }
 
-tMD_TypeDef **types;
+tMD_TypeDef** types;
 static U32 numInitTypes;
 
 typedef struct tTypeInit_ tTypeInit;
-struct tTypeInit_ {
-	char *assemblyName;
-	char *nameSpace;
-	char *name;
+struct tTypeInit_
+{
+	char* assemblyName;
+	char* nameSpace;
+	char* name;
 	U8 stackType;
 	U8 stackSize;
 	U8 arrayElementSize;
@@ -415,14 +440,16 @@ static tTypeInit typeInit[] = {
 
 int CorLibDone = 0;
 
-void Type_Init() {
+void Type_Init()
+{
 	U32 i;
-
 	// Build all the types needed by the interpreter.
 	numInitTypes = sizeof(typeInit) / sizeof(typeInit[0]);
 	types = (tMD_TypeDef**)mallocForever(numInitTypes * sizeof(tMD_TypeDef*));
-	for (i=0; i<numInitTypes; i++) {
-		if (typeInit[i].assemblyName != NULL) {
+	for (i = 0; i < numInitTypes; i++)
+	{
+		if (typeInit[i].assemblyName != NULL)
+		{
 			// Normal type initialisation
 			types[i] = MetaData_GetTypeDefFromFullName(typeInit[i].assemblyName, typeInit[i].nameSpace, typeInit[i].name);
 			// For the pre-defined system types, fill in the well-known memory sizes
@@ -432,10 +459,14 @@ void Type_Init() {
 			types[i]->instanceMemSize = typeInit[i].instanceMemSize;
 		}
 	}
-	for (i=0; i<numInitTypes; i++) {
-		if (typeInit[i].assemblyName != NULL) {
+	for (i = 0; i < numInitTypes; i++)
+	{
+		if (typeInit[i].assemblyName != NULL)
+		{
 			MetaData_Fill_TypeDef(types[i], NULL, NULL);
-		} else {
+		}
+		else
+		{
 			// Special initialisation for arrays of particular types.
 			types[i] = Type_GetArrayTypeDef(types[(U32)(typeInit[i].name)], NULL, NULL);
 		}
@@ -443,47 +474,61 @@ void Type_Init() {
 	CorLibDone = 1;
 }
 
-U32 Type_IsMethod(tMD_MethodDef *pMethod, STRING name, tMD_TypeDef *pReturnType, U32 numParams, U8 *pParamTypeIndexs) {
+U32 Type_IsMethod(tMD_MethodDef* pMethod, STRING name, tMD_TypeDef* pReturnType, U32 numParams, U8* pParamTypeIndexs)
+{
 	SIG sig;
 	U32 sigLen, numSigParams, i, nameLen;
 
 	nameLen = (U32)strlen(name);
-	if (name[nameLen-1] == '>') {
+	if (name[nameLen - 1] == '>')
+	{
 		// Generic instance method
-		if (strncmp(pMethod->name, name, nameLen - 1) != 0) {
+		if (strncmp(pMethod->name, name, nameLen - 1) != 0)
+		{
 			return 0;
 		}
-	} else {
-		if (strcmp(pMethod->name, name) != 0) {
+	}
+	else
+	{
+		if (strcmp(pMethod->name, name) != 0)
+		{
 			return 0;
 		}
 	}
 
 	sig = MetaData_GetBlob(pMethod->signature, &sigLen);
 	i = MetaData_DecodeSigEntry(&sig); // Don't care about this
-	if (i & SIG_METHODDEF_GENERIC) {
+	if (i & SIG_METHODDEF_GENERIC)
+	{
 		MetaData_DecodeSigEntry(&sig);
 	}
 	numSigParams = MetaData_DecodeSigEntry(&sig);
 
-	if (numParams != numSigParams) {
+	if (numParams != numSigParams)
+	{
 		return 0;
 	}
 
-	if (pReturnType == types[TYPE_SYSTEM_VOID]) {
+	if (pReturnType == types[TYPE_SYSTEM_VOID])
+	{
 		pReturnType = NULL;
 	}
 
-	for (i=0; i<numParams + 1; i++) {
-		tMD_TypeDef *pSigType, *pParamType;
+	for (i = 0; i < numParams + 1; i++)
+	{
+		tMD_TypeDef* pSigType, * pParamType;
 
 		pSigType = Type_GetTypeFromSig(pMethod->pMetaData, &sig, NULL, NULL);
-		pParamType = (i == 0)?pReturnType:types[pParamTypeIndexs[i-1]];
+		pParamType = (i == 0) ? pReturnType : types[pParamTypeIndexs[i - 1]];
 
-		if (pSigType != NULL && TYPE_ISARRAY(pSigType) && pParamType == types[TYPE_SYSTEM_ARRAY_NO_TYPE]) {
+		if (pSigType != NULL && TYPE_ISARRAY(pSigType) && pParamType == types[TYPE_SYSTEM_ARRAY_NO_TYPE])
+		{
 			// It's ok...
-		} else {
-			if (pSigType != pParamType) {
+		}
+		else
+		{
+			if (pSigType != pParamType)
+			{
 				goto endBad;
 			}
 		}
@@ -494,9 +539,12 @@ endBad:
 	return 0;
 }
 
-U32 Type_IsDerivedFromOrSame(tMD_TypeDef *pBaseType, tMD_TypeDef *pTestType) {
-	while (pTestType != NULL) {
-		if (pTestType == pBaseType) {
+U32 Type_IsDerivedFromOrSame(tMD_TypeDef* pBaseType, tMD_TypeDef* pTestType)
+{
+	while (pTestType != NULL)
+	{
+		if (pTestType == pBaseType)
+		{
 			return 1;
 		}
 		MetaData_Fill_TypeDef(pTestType, NULL, NULL);
@@ -505,25 +553,31 @@ U32 Type_IsDerivedFromOrSame(tMD_TypeDef *pBaseType, tMD_TypeDef *pTestType) {
 	return 0;
 }
 
-U32 Type_IsImplemented(tMD_TypeDef *pInterface, tMD_TypeDef *pTestType) {
+U32 Type_IsImplemented(tMD_TypeDef* pInterface, tMD_TypeDef* pTestType)
+{
 	U32 i;
 
-	for (i=0; i<pTestType->numInterfaces; i++) {
-		if (pTestType->pInterfaceMaps[i].pInterface == pInterface) {
+	for (i = 0; i < pTestType->numInterfaces; i++)
+	{
+		if (pTestType->pInterfaceMaps[i].pInterface == pInterface)
+		{
 			return 1;
 		}
 	}
 	return 0;
 }
 
-U32 Type_IsAssignableFrom(tMD_TypeDef *pToType, tMD_TypeDef *pFromType) {
+U32 Type_IsAssignableFrom(tMD_TypeDef* pToType, tMD_TypeDef* pFromType)
+{
 	return
 		Type_IsDerivedFromOrSame(pToType, pFromType) ||
 		(TYPE_ISINTERFACE(pToType) && Type_IsImplemented(pToType, pFromType));
 }
 
-HEAP_PTR Type_GetTypeObject(tMD_TypeDef *pTypeDef) {
-	if (pTypeDef->typeObject == NULL) {
+HEAP_PTR Type_GetTypeObject(tMD_TypeDef* pTypeDef)
+{
+	if (pTypeDef->typeObject == NULL)
+	{
 		pTypeDef->typeObject = RuntimeType_New(pTypeDef);
 	}
 	return pTypeDef->typeObject;

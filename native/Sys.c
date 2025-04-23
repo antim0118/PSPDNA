@@ -44,7 +44,7 @@
 
 #endif
 
-void printline(char *buff, int size, int linesize)
+void printline(char* buff, int size, int linesize)
 {
 #if defined(__PSP__)
 	int hedge = size % linesize;
@@ -68,7 +68,7 @@ void printline(char *buff, int size, int linesize)
 	printf("%s\n", buff);
 }
 
-void Crash(char *pMsg, ...)
+void Crash(char* pMsg, ...)
 {
 	va_list va;
 
@@ -96,7 +96,7 @@ void Crash(char *pMsg, ...)
 
 U32 logLevel = 0;
 
-void log_f(U32 level, char *pMsg, ...)
+void log_f(U32 level, char* pMsg, ...)
 {
 	va_list va;
 
@@ -112,7 +112,7 @@ void log_f(U32 level, char *pMsg, ...)
 }
 
 static char methodName[2048];
-char *Sys_GetMethodDesc(tMD_MethodDef *pMethod)
+char* Sys_GetMethodDesc(tMD_MethodDef* pMethod)
 {
 	U32 i;
 
@@ -131,9 +131,14 @@ char *Sys_GetMethodDesc(tMD_MethodDef *pMethod)
 
 static U32 mallocForeverSize = 0;
 // malloc() some memory that will never need to be resized or freed.
-void *mallocForever(U32 size)
+void* mallocForever(U32 size)
 {
+	if (size > 31457280)
+	{
+		printf("--- mallocForever: !!!! Trying to allocate 30Mb+: %dMb\n", size / 1024 / 1024);
+	}
 	mallocForeverSize += size;
+	printf("--- mallocForever: TotalSize %d\n", mallocForeverSize);
 	log_f(3, "--- mallocForever: TotalSize %d\n", mallocForeverSize);
 	return malloc(size);
 }
@@ -151,7 +156,7 @@ void* mallocTrace(int s, char *pFile, int line) {
 U64 msTime()
 {
 #ifdef _WIN32
-	static LARGE_INTEGER freq = {0, 0};
+	static LARGE_INTEGER freq = { 0, 0 };
 	LARGE_INTEGER time;
 	if (freq.QuadPart == 0)
 	{
@@ -174,7 +179,7 @@ U64 msTime()
 U64 microTime()
 {
 #ifdef _WIN32
-	static LARGE_INTEGER freq = {0, 0};
+	static LARGE_INTEGER freq = { 0, 0 };
 	LARGE_INTEGER time;
 	if (freq.QuadPart == 0)
 	{
@@ -204,18 +209,18 @@ void SleepMS(U32 ms)
 #endif
 }
 
-FILE *pLogger = NULL;
+FILE* pLogger = NULL;
 
 void initLogfile()
 {
-	if(pLogger == NULL)
+	if (pLogger == NULL)
 	{
-		pLogger=fopen("log.txt", "w");
-		if(pLogger == NULL)
+		pLogger = fopen("log.txt", "w");
+		if (pLogger == NULL)
 		{
 			Crash("logfile could not be opened");
 		}
-        
+
 		fseek(pLogger, 0, SEEK_END); // got to the end of the file
 
 		log_s("--------------------\nstarted\n\n");
@@ -224,7 +229,7 @@ void initLogfile()
 
 void closeLogfile()
 {
-	if(pLogger != NULL)
+	if (pLogger != NULL)
 	{
 		log_s("\nended\n--------------------\n");
 		fflush(pLogger);
@@ -232,9 +237,9 @@ void closeLogfile()
 	}
 }
 
-void log_s(char *pMsg, ...)
+void log_s(char* pMsg, ...)
 {
-	if(pLogger == NULL)
+	if (pLogger == NULL)
 	{
 		Crash("logfile is not open");
 	}
