@@ -40,14 +40,10 @@ jobs:
     - name: Run make rebuild
       run: make rebuild
 
-    - name: Create build archive
-      if: success()
-      run: |
-        zip -r build-artifact.zip ./build
-
     - name: Upload build artifact
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: build-artifact
-        path: build-artifact.zip
+        path: build/
         retention-days: 30
