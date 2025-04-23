@@ -40,7 +40,7 @@
 
 #if defined(__PSP__)
 
-#define printf pspDebugScreenPrintf
+// #define printf pspDebugScreenPrintf
 
 #endif
 

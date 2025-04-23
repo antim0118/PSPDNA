@@ -53,7 +53,7 @@ PSP_HEAP_SIZE_MAX();
 #include "MethodState.h"
 
 #if defined(__PSP__)
-#define printf pspDebugScreenPrintf
+// #define printf pspDebugScreenPrintf
 #endif
 
 int dna_main(int argc, char** argp);
