@@ -43,11 +43,11 @@ jobs:
     - name: Create build archive
       if: success()
       run: |
-        tar -czvf build-artifact.tar.gz -C ./build .
+        zip -r build-artifact.zip ./build
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v4
       with:
         name: build-artifact
-        path: build-artifact.tar.gz
+        path: build-artifact.zip
         retention-days: 30
