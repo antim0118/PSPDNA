@@ -28,11 +28,11 @@
 #ifdef GEN_COMBINED_OPCODES
 
 // Pointer to the least called method
-static tMD_MethodDef *pLeastCalledMethod = NULL;
+static tMD_MethodDef* pLeastCalledMethod = NULL;
 // Amount of memory currently used by combined JITted methods
 static U32 combinedJITSize = 0;
 
-static void AddCall(tMD_MethodDef *pMethod) {
+static void AddCall(tMD_MethodDef* pMethod) {
 	pMethod->genCallCount++;
 	// See if this method needs moving in the 'call quantity' linked-list,
 	// or if this method needs adding to the list for the first time
@@ -46,14 +46,14 @@ static void AddCall(tMD_MethodDef *pMethod) {
 		pLeastCalledMethod = pMethod;
 	} else {
 		// See if this method needs moving up the linked-list
-		tMD_MethodDef *pCheckMethod = pMethod;
+		tMD_MethodDef* pCheckMethod = pMethod;
 		U64 numCalls = pMethod->genCallCount;
 		while (pCheckMethod->pNextHighestCalls != NULL && numCalls > pCheckMethod->pNextHighestCalls->genCallCount) {
 			pCheckMethod = pCheckMethod->pNextHighestCalls;
 		}
 		if (numCalls > pCheckMethod->genCallCount) {
 			// Swap the two methods in the linked-list
-			tMD_MethodDef *pT1, *pT2;
+			tMD_MethodDef* pT1, * pT2;
 			U32 adjacent = pCheckMethod->pPrevHighestCalls == pMethod;
 
 			if (pCheckMethod->pNextHighestCalls != NULL) {
@@ -80,24 +80,24 @@ static void AddCall(tMD_MethodDef *pMethod) {
 				pCheckMethod->pNextHighestCalls = pMethod;
 			}
 		}
-	}	
+	}
 }
 
-static void DeleteCombinedJIT(tMD_MethodDef *pMethod) {
-	tCombinedOpcodesMem *pCOM;
-	tJITted *pJIT = pMethod->pJITtedCombined;
+static void DeleteCombinedJIT(tMD_MethodDef* pMethod) {
+	tCombinedOpcodesMem* pCOM;
+	tJITted* pJIT = pMethod->pJITtedCombined;
 	free(pJIT->pExceptionHeaders);
 	free(pJIT->pOps);
 	pCOM = pJIT->pCombinedOpcodesMem;
 	while (pCOM != NULL) {
-		tCombinedOpcodesMem *pT = pCOM;
+		tCombinedOpcodesMem* pT = pCOM;
 		free(pCOM->pMem);
 		pCOM = pCOM->pNext;
 		free(pT);
 	}
 }
 
-static void RemoveCombinedJIT(tMD_MethodDef *pMethod) {
+static void RemoveCombinedJIT(tMD_MethodDef* pMethod) {
 	if (pMethod->callStackCount == 0) {
 		DeleteCombinedJIT(pMethod);
 	} else {
@@ -109,7 +109,7 @@ static void RemoveCombinedJIT(tMD_MethodDef *pMethod) {
 	log_f(1, "Removing Combined JIT: %s\n", Sys_GetMethodDesc(pMethod));
 }
 
-static void AddCombinedJIT(tMD_MethodDef *pMethod) {
+static void AddCombinedJIT(tMD_MethodDef* pMethod) {
 	JIT_Prepare(pMethod, 1);
 	combinedJITSize += pMethod->pJITtedCombined->opsMemSize;
 	log_f(1, "Creating Combined JIT: %s\n", Sys_GetMethodDesc(pMethod));
@@ -117,11 +117,11 @@ static void AddCombinedJIT(tMD_MethodDef *pMethod) {
 
 #endif
 
-tMethodState* MethodState_Direct(tThread *pThread, tMD_MethodDef *pMethod, tMethodState *pCaller, U32 isInternalNewObjCall) {
-	tMethodState *pThis;
+tMethodState* MethodState_Direct(tThread* pThread, tMD_MethodDef* pMethod, tMethodState* pCaller, U32 isInternalNewObjCall) {
+	tMethodState* pThis;
 
 	if (!pMethod->isFilled) {
-		tMD_TypeDef *pTypeDef;
+		tMD_TypeDef* pTypeDef;
 
 		pTypeDef = MetaData_GetTypeDefFromMethodDef(pMethod);
 		MetaData_Fill_TypeDef(pTypeDef, NULL, NULL);
@@ -160,12 +160,12 @@ tMethodState* MethodState_Direct(tThread *pThread, tMD_MethodDef *pMethod, tMeth
 	}*/
 	if (pMethod->pJITtedCombined == NULL && pMethod->genCallCount >= GEN_COMBINED_OPCODES_CALL_TRIGGER &&
 		(pMethod->pNextHighestCalls == NULL || pMethod->pPrevHighestCalls == NULL ||
-		pMethod->pPrevHighestCalls->pJITtedCombined != NULL ||
-		(combinedJITSize < GEN_COMBINED_OPCODES_MAX_MEMORY && pMethod->pNextHighestCalls->pJITtedCombined != NULL))) {
+			pMethod->pPrevHighestCalls->pJITtedCombined != NULL ||
+			(combinedJITSize < GEN_COMBINED_OPCODES_MAX_MEMORY && pMethod->pNextHighestCalls->pJITtedCombined != NULL))) {
 		// Do a combined JIT, if there's enough room after removing combined JIT from previous
 		if (combinedJITSize > GEN_COMBINED_OPCODES_MAX_MEMORY) {
 			// Remove the least-called function's combined JIT
-			tMD_MethodDef *pToRemove = pMethod;
+			tMD_MethodDef* pToRemove = pMethod;
 			while (pToRemove->pPrevHighestCalls != NULL && pToRemove->pPrevHighestCalls->pJITtedCombined != NULL) {
 				pToRemove = pToRemove->pPrevHighestCalls;
 			}
@@ -195,15 +195,15 @@ tMethodState* MethodState_Direct(tThread *pThread, tMD_MethodDef *pMethod, tMeth
 	return pThis;
 }
 
-tMethodState* MethodState(tThread *pThread, tMetaData *pMetaData, IDX_TABLE methodToken, tMethodState *pCaller) {
-	tMD_MethodDef *pMethod;
+tMethodState* MethodState(tThread* pThread, tMetaData* pMetaData, IDX_TABLE methodToken, tMethodState* pCaller) {
+	tMD_MethodDef* pMethod;
 
 	pMethod = MetaData_GetMethodDefFromDefRefOrSpec(pMetaData, methodToken, NULL, NULL);
 	return MethodState_Direct(pThread, pMethod, pCaller, 0);
 }
 
-void MethodState_Delete(tThread *pThread, tMethodState **ppMethodState) {
-	tMethodState *pThis = *ppMethodState;
+void MethodState_Delete(tThread* pThread, tMethodState** ppMethodState) {
+	tMethodState* pThis = *ppMethodState;
 
 
 #ifdef GEN_COMBINED_OPCODES

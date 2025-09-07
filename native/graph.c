@@ -15,8 +15,7 @@ const int screen_h = 272;
 const int bsize = screen_h * screenb_w;
 int depth = 4;
 
-void initGraf()
-{
+void initGraf() {
     draw_buffer = sceGeEdramGetAddr();
     disp_buffer = (color_t*)(sceGeEdramGetAddr() + (bsize * depth));
 
@@ -24,16 +23,13 @@ void initGraf()
     sceDisplaySetFrameBuf(disp_buffer, screenb_w, PSP_DISPLAY_PIXEL_FORMAT_8888, PSP_DISPLAY_SETBUF_NEXTFRAME);
 }
 
-void clearGraf(color_t color)
-{
-    for (int i = 0; i < bsize; i++)
-    {
+void clearGraf(color_t color) {
+    for (int i = 0; i < bsize; i++) {
         draw_buffer[i] = color;
     }
 }
 
-void swapBufferdGraf()
-{
+void swapBufferdGraf() {
     color_t* temp = disp_buffer;
     disp_buffer = draw_buffer;
     draw_buffer = temp;
@@ -42,63 +38,49 @@ void swapBufferdGraf()
     sceDisplaySetFrameBuf(disp_buffer, screenb_w, PSP_DISPLAY_PIXEL_FORMAT_8888, PSP_DISPLAY_SETBUF_NEXTFRAME);
 }
 
-void drawRectGraf(int x, int y, int w, int h, color_t color)
-{
-    if (x > screen_w)
-    {
+void drawRectGraf(int x, int y, int w, int h, color_t color) {
+    if (x > screen_w) {
         x = screen_w;
     }
-    if (y > screen_h)
-    {
+    if (y > screen_h) {
         y = screen_h;
     }
-    if (x + w > screen_w)
-    {
+    if (x + w > screen_w) {
         w = screen_w - x;
     }
-    if (y + h > screen_h)
-    {
+    if (y + h > screen_h) {
         h = screen_h - y;
     }
 
     int offset = x + (y * screenb_w);
 
-    for (int y1 = 0; y1 < h; y1++)
-    {
-        for (int x1 = 0; x1 < w; x1++)
-        {
+    for (int y1 = 0; y1 < h; y1++) {
+        for (int x1 = 0; x1 < w; x1++) {
             draw_buffer[x1 + offset + y1 * screenb_w] = color;
         }
     }
 }
 
 //really this should have a size too.
-void drawImageGraf(int x, int y, int w, int h, uint32_t* image)
-{
-    if (x > screen_w)
-    {
+void drawImageGraf(int x, int y, int w, int h, uint32_t* image) {
+    if (x > screen_w) {
         x = screen_w;
     }
-    if (y > screen_h)
-    {
+    if (y > screen_h) {
         y = screen_h;
     }
-    if (x + w > screen_w)
-    {
+    if (x + w > screen_w) {
         w = screen_w - x;
     }
-    if (y + h > screen_h)
-    {
+    if (y + h > screen_h) {
         h = screen_h - y;
     }
 
     int offset = x + (y * screenb_w);
     int pixelProgress = 0;
 
-    for (int y1 = 0; y1 < h; y1++)
-    {
-        for (int x1 = 0; x1 < w; x1++)
-        {
+    for (int y1 = 0; y1 < h; y1++) {
+        for (int x1 = 0; x1 < w; x1++) {
             uint32_t* p = &image[pixelProgress];
             draw_buffer[x1 + offset + y1 * screenb_w] = *p;
             pixelProgress += 1;

@@ -128,8 +128,7 @@ tJITCodeInfo jitCodeGoNext;
 
 #define THROW(exType) heapPtr = Heap_AllocType(exType); goto throwHeapPtr
 
-static void CheckIfCurrentInstructionHasBreakpoint(tMethodState* pMethodState, U32 opOffset, I32* pOpSequencePoints)
-{
+static void CheckIfCurrentInstructionHasBreakpoint(tMethodState* pMethodState, U32 opOffset, I32* pOpSequencePoints) {
 	if (pOpSequencePoints != NULL) {
 		I32 currentOpSequencePoint = pOpSequencePoints[opOffset];
 		if (currentOpSequencePoint >= 0) {
@@ -139,7 +138,7 @@ static void CheckIfCurrentInstructionHasBreakpoint(tMethodState* pMethodState, U
 }
 
 // Note: newObj is only set if a constructor is being called
-static void CreateParameters(PTR pParamsLocals, tMD_MethodDef *pCallMethod, PTR *ppCurEvalStack, HEAP_PTR newObj) {
+static void CreateParameters(PTR pParamsLocals, tMD_MethodDef* pCallMethod, PTR* ppCurEvalStack, HEAP_PTR newObj) {
 	U32 ofs;
 
 	if (newObj != NULL) {
@@ -154,12 +153,12 @@ static void CreateParameters(PTR pParamsLocals, tMD_MethodDef *pCallMethod, PTR 
 	memcpy(pParamsLocals + ofs, *ppCurEvalStack, pCallMethod->parameterStackSize - ofs);
 }
 
-static tMethodState* RunFinalizer(tThread *pThread) {
+static tMethodState* RunFinalizer(tThread* pThread) {
 	HEAP_PTR heapPtr = GetNextFinalizer();
 	if (heapPtr != NULL) {
 		// There is a pending finalizer, so create a MethodState for it and put it as next-to-run on the stack
-		tMethodState *pFinalizerMethodState;
-		tMD_TypeDef *pFinalizerType = Heap_GetType(heapPtr);
+		tMethodState* pFinalizerMethodState;
+		tMD_TypeDef* pFinalizerType = Heap_GetType(heapPtr);
 
 		pFinalizerMethodState = MethodState_Direct(pThread, pFinalizerType->pFinalizer, pThread->pCurrentMethodState, 0);
 		// Mark this methodState as a Finalizer
@@ -242,16 +241,16 @@ U32 opcodeNumUses[JIT_OPCODE_MAXNUM];
 
 #define RUN_FINALIZER() {tMethodState *pMS = RunFinalizer(pThread);if(pMS) {CHANGE_METHOD_STATE(pMS);}}
 
-U32 JIT_Execute(tThread *pThread, U32 numInst) {
-	tJITted *pJIT;
-	tMethodState *pCurrentMethodState;
+U32 JIT_Execute(tThread* pThread, U32 numInst) {
+	tJITted* pJIT;
+	tMethodState* pCurrentMethodState;
 	PTR pParamsLocals;
 
 	// Local copies of thread state variables, to speed up execution
 	// Pointer to next op-code
-	U32 *pOps;
-	I32 *pOpSequencePoints;
-	register U32 *pCurOp;
+	U32* pOps;
+	I32* pOpSequencePoints;
+	register U32* pCurOp;
 	// Pointer to eval-stack position
 	register PTR pCurEvalStack;
 	PTR pTempPtr;
@@ -269,7 +268,7 @@ U32 JIT_Execute(tThread *pThread, U32 numInst) {
 	PTR pMem;
 
 	if (pThread == NULL) {
-		void *pAddr;
+		void* pAddr;
 		// Special case to get all the label addresses
 		// Default all op-codes to noCode.
 		GET_LABEL(pAddr, noCode);
@@ -495,7 +494,7 @@ U32 JIT_Execute(tThread *pThread, U32 numInst) {
 		GET_LABELS(JIT_BRANCH_FALSE);
 		GET_LABELS(JIT_BRANCH_TRUE);
 		GET_LABELS(JIT_LOADTOKEN_TYPE);
-		
+
 		GET_LABELS(JIT_LOADTOKEN_FIELD);
 		GET_LABELS(JIT_LOADINDIRECT_I8);
 		GET_LABELS(JIT_LOADINDIRECT_U8);
@@ -747,7 +746,7 @@ JIT_LOADPARAMLOCAL_F64_end:
 JIT_LOADPARAMLOCAL_VALUETYPE_start:
 	OPCODE_USE(JIT_LOADPARAMLOCAL_VALUETYPE);
 	{
-		tMD_TypeDef *pTypeDef;
+		tMD_TypeDef* pTypeDef;
 		U32 ofs;
 		PTR pMem;
 
@@ -850,7 +849,7 @@ JIT_STOREPARAMLOCAL_F64_end:
 JIT_STOREPARAMLOCAL_VALUETYPE_start:
 	OPCODE_USE(JIT_STOREPARAMLOCAL_VALUETYPE);
 	{
-		tMD_TypeDef *pTypeDef;
+		tMD_TypeDef* pTypeDef;
 		U32 ofs;
 		PTR pMem;
 
@@ -966,35 +965,35 @@ JIT_STORE_OBJECT_VALUETYPE_start:
 	OPCODE_USE(JIT_STORE_OBJECT_VALUETYPE);
 	{
 		U32 size = GET_OP(); // The size, in bytes, of the value-type to store
-		U32 memSize = (size<4)?4:size;
+		U32 memSize = (size < 4) ? 4 : size;
 		PTR pMem = pCurEvalStack - memSize - sizeof(void*);
 		POP_VALUETYPE(*(void**)pMem, size, memSize);
 		POP(4);
 	}
 JIT_STORE_OBJECT_VALUETYPE_end:
 	GO_NEXT();
-	
-	
-JIT_CALL_PINVOKE_start:
-// 	OPCODE_USE(JIT_CALL_PINVOKE);
-// 	{
-// 		tJITCallPInvoke *pCallPInvoke;
-// 		U32 res;
 
-// 		pCallPInvoke = (tJITCallPInvoke*)(pCurOp - 1);
-// 		res = PInvoke_Call(pCallPInvoke, pParamsLocals, pCurrentMethodState->pEvalStack, pThread);
-// 		pCurrentMethodState->stackOfs = res;
-// 	}
-// 	goto JIT_RETURN_start;
+
+JIT_CALL_PINVOKE_start:
+	// 	OPCODE_USE(JIT_CALL_PINVOKE);
+	// 	{
+	// 		tJITCallPInvoke *pCallPInvoke;
+	// 		U32 res;
+
+	// 		pCallPInvoke = (tJITCallPInvoke*)(pCurOp - 1);
+	// 		res = PInvoke_Call(pCallPInvoke, pParamsLocals, pCurrentMethodState->pEvalStack, pThread);
+	// 		pCurrentMethodState->stackOfs = res;
+	// 	}
+	// 	goto JIT_RETURN_start;
 JIT_CALL_PINVOKE_end:
 
 JIT_CALL_NATIVE_start:
 	OPCODE_USE(JIT_CALL_NATIVE);
 	{
-		tJITCallNative *pCallNative;
+		tJITCallNative* pCallNative;
 		PTR pThis;
 		U32 thisOfs;
-		tAsyncCall *pAsync;
+		tAsyncCall* pAsync;
 
 		//pCallNative = (tJITCallNative*)&(pJIT->pOps[pCurrentMethodState->ipOffset - 1]);
 		pCallNative = (tJITCallNative*)(pCurOp - 1);
@@ -1046,7 +1045,7 @@ JIT_RETURN_start:
 	}
 	pMem = pCurrentMethodState->pEvalStack;
 	{
-		tMethodState *pOldMethodState = pCurrentMethodState;
+		tMethodState* pOldMethodState = pCurrentMethodState;
 		pThread->pCurrentMethodState = pCurrentMethodState->pCaller;
 		LOAD_METHOD_STATE();
 		// Copy return value to callers evaluation stack
@@ -1066,10 +1065,10 @@ JIT_RETURN_end:
 JIT_INVOKE_DELEGATE_start:
 	OPCODE_USE(JIT_INVOKE_DELEGATE);
 	{
-		tMD_MethodDef *pDelegateMethod, *pCallMethod;
-		void *pDelegate;
+		tMD_MethodDef* pDelegateMethod, * pCallMethod;
+		void* pDelegate;
 		HEAP_PTR pDelegateThis;
-		tMethodState *pCallMethodState;
+		tMethodState* pCallMethodState;
 		U32 ofs;
 
 		if (pCurrentMethodState->pNextDelegate == NULL) {
@@ -1174,7 +1173,7 @@ JIT_INVOKE_SYSTEM_REFLECTION_METHODBASE_end:
 JIT_REFLECTION_DYNAMICALLY_BOX_RETURN_VALUE_start:
 	OPCODE_USE(JIT_REFLECTION_DYNAMICALLY_BOX_RETURN_VALUE);
 	{
-		tMD_TypeDef *pLastInvocationReturnType = pCurrentMethodState->pReflectionInvokeReturnType;
+		tMD_TypeDef* pLastInvocationReturnType = pCurrentMethodState->pReflectionInvokeReturnType;
 		if (pLastInvocationReturnType == NULL) {
 			// It was a void method, so it won't have put anything on the stack. We need to put
 			// a null value there as a return value, because MethodBase.Invoke isn't void.
@@ -1211,9 +1210,9 @@ JIT_CALL_INTERFACE_start:
 allCallStart:
 	OPCODE_USE(JIT_CALL_O);
 	{
-		tMD_MethodDef *pCallMethod;
-		tMethodState *pCallMethodState;
-		tMD_TypeDef *pBoxCallType;
+		tMD_MethodDef* pCallMethod;
+		tMethodState* pCallMethodState;
+		tMD_TypeDef* pBoxCallType;
 
 		if (op == JIT_BOX_CALLVIRT) {
 			pBoxCallType = (tMD_TypeDef*)GET_OP();
@@ -1235,7 +1234,7 @@ allCallStart:
 
 		// If it's a virtual call then find the real correct method to call
 		if (op == JIT_CALLVIRT_O || op == JIT_BOX_CALLVIRT || op == JIT_DEREF_CALLVIRT) {
-			tMD_TypeDef *pThisType;
+			tMD_TypeDef* pThisType;
 			// Get the actual object that is becoming 'this'
 			if (heapPtr == NULL) {
 				heapPtr = *(HEAP_PTR*)(pCurEvalStack - pCallMethod->parameterStackSize);
@@ -1249,7 +1248,7 @@ allCallStart:
 				pCallMethod = pThisType->pVTable[pCallMethod->vTableOfs];
 			}
 		} else if (op == JIT_CALL_INTERFACE) {
-			tMD_TypeDef *pInterface, *pThisType;
+			tMD_TypeDef* pInterface, * pThisType;
 			U32 vIndex;
 			I32 i;
 
@@ -1261,7 +1260,7 @@ allCallStart:
 			vIndex = 0xffffffff;
 			// This must be searched backwards so if an interface is implemented more than
 			// once in the type hierarchy, the most recent definition gets called
-			for (i=(I32)pThisType->numInterfaces-1; i >= 0; i--) {
+			for (i = (I32)pThisType->numInterfaces - 1; i >= 0; i--) {
 				if (pThisType->pInterfaceMaps[i].pInterface == pInterface) {
 					// Found the right interface map
 					if (pThisType->pInterfaceMaps[i].pVTableLookup != NULL) {
@@ -1275,7 +1274,7 @@ allCallStart:
 			Assert(vIndex != 0xffffffff);
 			pCallMethod = pThisType->pVTable[vIndex];
 		}
-callMethodSet:
+	callMethodSet:
 		//printf("Calling method: %s\n", Sys_GetMethodDesc(pCallMethod));
 		// Set up the new method state for the called method
 		pCallMethodState = MethodState_Direct(pThread, pCallMethod, pCurrentMethodState, 0);
@@ -1749,97 +1748,97 @@ JIT_BLT_UN_I32I32_end:
 
 JIT_CEQ_I32I32_start: // Handles I32 and O
 	OPCODE_USE(JIT_CEQ_I32I32);
-	BINARY_OP(U32, U32, U32, ==);
+	BINARY_OP(U32, U32, U32, == );
 JIT_CEQ_I32I32_end:
 	GO_NEXT();
 
 JIT_CGT_I32I32_start:
 	OPCODE_USE(JIT_CGT_I32I32);
-	BINARY_OP(U32, I32, I32, >);
+	BINARY_OP(U32, I32, I32, > );
 JIT_CGT_I32I32_end:
 	GO_NEXT();
 
 JIT_CGT_UN_I32I32_start: // Handles I32 and O
 	OPCODE_USE(JIT_CGT_UN_I32I32);
-	BINARY_OP(U32, U32, U32, >);
+	BINARY_OP(U32, U32, U32, > );
 JIT_CGT_UN_I32I32_end:
 	GO_NEXT();
 
 JIT_CLT_I32I32_start:
 	OPCODE_USE(JIT_CLT_I32I32);
-	BINARY_OP(U32, I32, I32, <);
+	BINARY_OP(U32, I32, I32, < );
 JIT_CLT_I32I32_end:
 	GO_NEXT();
 
 JIT_CLT_UN_I32I32_start:
 	OPCODE_USE(JIT_CLT_UN_I32I32);
-	BINARY_OP(U32, U32, U32, <);
+	BINARY_OP(U32, U32, U32, < );
 JIT_CLT_UN_I32I32_end:
 	GO_NEXT();
 
 JIT_CEQ_I64I64_start:
 	OPCODE_USE(JIT_CEQ_I64I64);
-	BINARY_OP(U32, U64, U64, ==);
+	BINARY_OP(U32, U64, U64, == );
 JIT_CEQ_I64I64_end:
 	GO_NEXT();
 
 JIT_CGT_I64I64_start:
 	OPCODE_USE(JIT_CGT_I64I64);
-	BINARY_OP(U32, I64, I64, >);
+	BINARY_OP(U32, I64, I64, > );
 JIT_CGT_I64I64_end:
 	GO_NEXT();
 
 JIT_CGT_UN_I64I64_start:
 	OPCODE_USE(JIT_CGT_UN_I64I64);
-	BINARY_OP(U32, U64, U64, >);
+	BINARY_OP(U32, U64, U64, > );
 JIT_CGT_UN_I64I64_end:
 	GO_NEXT();
 
 JIT_CLT_I64I64_start:
 	OPCODE_USE(JIT_CLT_I64I64);
-	BINARY_OP(U32, I64, I64, <);
+	BINARY_OP(U32, I64, I64, < );
 JIT_CLT_I64I64_end:
 	GO_NEXT();
 
 JIT_CLT_UN_I64I64_start:
 	OPCODE_USE(JIT_CLT_UN_I64I64);
-	BINARY_OP(U32, U64, U64, <);
+	BINARY_OP(U32, U64, U64, < );
 JIT_CLT_UN_I64I64_end:
 	GO_NEXT();
 
 JIT_CEQ_F32F32_start:
 	OPCODE_USE(JIT_CEQ_F32F32);
-	BINARY_OP(U32, float, float, ==);
+	BINARY_OP(U32, float, float, == );
 JIT_CEQ_F32F32_end:
 	GO_NEXT();
 
 JIT_CEQ_F64F64_start:
 	OPCODE_USE(JIT_CEQ_F64F64);
-	BINARY_OP(U32, double, double, ==);
+	BINARY_OP(U32, double, double, == );
 JIT_CEQ_F64F64_end:
 	GO_NEXT();
 
 JIT_CGT_F32F32_start:
 	OPCODE_USE(JIT_CGT_F32F32);
-	BINARY_OP(U32, float, float, >);
+	BINARY_OP(U32, float, float, > );
 JIT_CGT_F32F32_end:
 	GO_NEXT();
 
 JIT_CGT_F64F64_start:
 	OPCODE_USE(JIT_CGT_F64F64);
-	BINARY_OP(U32, double, double, >);
+	BINARY_OP(U32, double, double, > );
 JIT_CGT_F64F64_end:
 	GO_NEXT();
 
 JIT_CLT_F32F32_start:
 	OPCODE_USE(JIT_CLT_F32F32);
-	BINARY_OP(U32, float, float, <);
+	BINARY_OP(U32, float, float, < );
 JIT_CLT_F32F32_end:
 	GO_NEXT();
 
 JIT_CLT_F64F64_start:
 	OPCODE_USE(JIT_CLT_F64F64);
-	BINARY_OP(U32, double, double, <);
+	BINARY_OP(U32, double, double, < );
 JIT_CLT_F64F64_end:
 	GO_NEXT();
 
@@ -2013,37 +2012,37 @@ JIT_MUL_F64F64_end:
 
 JIT_DIV_I32I32_start:
 	OPCODE_USE(JIT_DIV_I32I32);
-	BINARY_OP(I32, I32, I32, /);
+	BINARY_OP(I32, I32, I32, / );
 JIT_DIV_I32I32_end:
 	GO_NEXT();
 
 JIT_DIV_I64I64_start:
 	OPCODE_USE(JIT_DIV_I64I64);
-	BINARY_OP(I64, I64, I64, /);
+	BINARY_OP(I64, I64, I64, / );
 JIT_DIV_I64I64_end:
 	GO_NEXT();
 
 JIT_DIV_F32F32_start:
 	OPCODE_USE(JIT_DIV_F32F32);
-	BINARY_OP(float, float, float, /);
+	BINARY_OP(float, float, float, / );
 JIT_DIV_F32F32_end:
 	GO_NEXT();
 
 JIT_DIV_F64F64_start:
 	OPCODE_USE(JIT_DIV_F64F64);
-	BINARY_OP(double, double, double, /);
+	BINARY_OP(double, double, double, / );
 JIT_DIV_F64F64_end:
 	GO_NEXT();
 
 JIT_DIV_UN_I32I32_start:
 	OPCODE_USE(JIT_DIV_UN_I32I32);
-	BINARY_OP(U32, U32, U32, /);
+	BINARY_OP(U32, U32, U32, / );
 JIT_DIV_UN_I32I32_end:
 	GO_NEXT();
 
 JIT_DIV_UN_I64I64_start:
 	OPCODE_USE(JIT_DIV_UN_I64I64);
-	BINARY_OP(U64, U64, U64, /);
+	BINARY_OP(U64, U64, U64, / );
 JIT_DIV_UN_I64I64_end:
 	GO_NEXT();
 
@@ -2085,13 +2084,13 @@ JIT_AND_I64I64_end:
 
 JIT_OR_I32I32_start:
 	OPCODE_USE(JIT_OR_I32I32);
-	BINARY_OP(U32, U32, U32, |);
+	BINARY_OP(U32, U32, U32, | );
 JIT_OR_I32I32_end:
 	GO_NEXT();
 
 JIT_OR_I64I64_start:
 	OPCODE_USE(JIT_OR_I64I64);
-	BINARY_OP(U64, U64, U64, |);
+	BINARY_OP(U64, U64, U64, | );
 JIT_OR_I64I64_end:
 	GO_NEXT();
 
@@ -2133,37 +2132,37 @@ JIT_NOT_I64_end:
 
 JIT_SHL_I32_start:
 	OPCODE_USE(JIT_SHL_I32);
-	BINARY_OP(U32, U32, U32, <<);
+	BINARY_OP(U32, U32, U32, << );
 JIT_SHL_I32_end:
 	GO_NEXT();
 
 JIT_SHR_I32_start:
 	OPCODE_USE(JIT_SHR_I32);
-	BINARY_OP(I32, I32, U32, >>);
+	BINARY_OP(I32, I32, U32, >> );
 JIT_SHR_I32_end:
 	GO_NEXT();
 
 JIT_SHR_UN_I32_start:
 	OPCODE_USE(JIT_SHR_UN_I32);
-	BINARY_OP(U32, U32, U32, >>);
+	BINARY_OP(U32, U32, U32, >> );
 JIT_SHR_UN_I32_end:
 	GO_NEXT();
 
 JIT_SHL_I64_start:
 	OPCODE_USE(JIT_SHL_I64);
-	BINARY_OP(U64, U64, U32, <<);
+	BINARY_OP(U64, U64, U32, << );
 JIT_SHL_I64_end:
 	GO_NEXT();
 
 JIT_SHR_I64_start:
 	OPCODE_USE(JIT_SHR_I64);
-	BINARY_OP(I64, I64, U32, >>);
+	BINARY_OP(I64, I64, U32, >> );
 JIT_SHR_I64_end:
 	GO_NEXT();
 
 JIT_SHR_UN_I64_start:
 	OPCODE_USE(JIT_SHR_UN_I64);
-	BINARY_OP(U64, U64, U32, >>);
+	BINARY_OP(U64, U64, U32, >> );
 JIT_SHR_UN_I64_end:
 	GO_NEXT();
 
@@ -2423,7 +2422,7 @@ JIT_LOADFUNCTION_end:
 JIT_LOADOBJECT_start:
 	OPCODE_USE(JIT_LOADOBJECT);
 	{
-		tMD_TypeDef *pTypeDef;
+		tMD_TypeDef* pTypeDef;
 		PTR pMem;
 
 		pMem = POP_PTR(); // address of value-type
@@ -2432,7 +2431,7 @@ JIT_LOADOBJECT_start:
 			// For bytes and int16s we need some special code to ensure that the stack
 			// does not contain rubbish in the bits unused in this type.
 			// But there is no harm in running this for all types, and it's smaller and probably faster
-			*(U32*)pCurEvalStack = 0;
+		*(U32*)pCurEvalStack = 0;
 		//}
 		PUSH_VALUETYPE(pMem, pTypeDef->arrayElementSize, pTypeDef->stackSize);
 	}
@@ -2452,9 +2451,9 @@ JIT_LOAD_STRING_end:
 JIT_NEWOBJECT_start:
 	OPCODE_USE(JIT_NEWOBJECT);
 	{
-		tMD_MethodDef *pConstructorDef;
+		tMD_MethodDef* pConstructorDef;
 		HEAP_PTR obj;
-		tMethodState *pCallMethodState;
+		tMethodState* pCallMethodState;
 		U32 isInternalConstructor;
 		PTR pTempPtr;
 
@@ -2490,8 +2489,8 @@ JIT_NEWOBJECT_end:
 JIT_NEWOBJECT_VALUETYPE_start:
 	OPCODE_USE(JIT_NEWOBJECT_VALUETYPE);
 	{
-		tMD_MethodDef *pConstructorDef;
-		tMethodState *pCallMethodState;
+		tMD_MethodDef* pConstructorDef;
+		tMethodState* pCallMethodState;
 		U32 isInternalConstructor;
 		PTR pTempPtr, pMem;
 
@@ -2525,7 +2524,7 @@ JIT_CAST_CLASS_start:
 jitCastClass:
 	OPCODE_USE(JIT_CAST_CLASS);
 	{
-		tMD_TypeDef *pToType, *pTestType;
+		tMD_TypeDef* pToType, * pTestType;
 		HEAP_PTR heapPtr;
 
 		pToType = (tMD_TypeDef*)GET_OP();
@@ -2544,7 +2543,7 @@ jitCastClass:
 		} else {
 			if (Type_IsAssignableFrom(pToType, pTestType) ||
 				(pToType->pGenericDefinition == types[TYPE_SYSTEM_NULLABLE] &&
-				pToType->ppClassTypeArgs[0] == pTestType)) {
+					pToType->ppClassTypeArgs[0] == pTestType)) {
 				// If derived class, interface, or nullable type compatible.
 				PUSH_O(heapPtr);
 				goto JIT_IS_INSTANCE_end;
@@ -2563,7 +2562,7 @@ JIT_CAST_CLASS_end:
 JIT_NEW_VECTOR_start: // Array with 1 dimension, zero-based
 	OPCODE_USE(JIT_NEW_VECTOR);
 	{
-		tMD_TypeDef *pArrayTypeDef;
+		tMD_TypeDef* pArrayTypeDef;
 		U32 numElements;
 		HEAP_PTR heapPtr;
 
@@ -2728,7 +2727,7 @@ JIT_STOREFIELD_PTR_start: // only for 32-bit
 JIT_STOREFIELD_F32_start:
 	OPCODE_USE(JIT_STOREFIELD_INT32);
 	{
-		tMD_FieldDef *pFieldDef;
+		tMD_FieldDef* pFieldDef;
 		PTR pMem;
 		U32 value;
 		HEAP_PTR heapPtr;
@@ -2750,7 +2749,7 @@ JIT_STOREFIELD_INT64_start:
 JIT_STOREFIELD_F64_start:
 	OPCODE_USE(JIT_STOREFIELD_F64);
 	{
-		tMD_FieldDef *pFieldDef;
+		tMD_FieldDef* pFieldDef;
 		PTR pMem;
 		U64 value;
 		HEAP_PTR heapPtr;
@@ -2768,7 +2767,7 @@ JIT_STOREFIELD_F64_end:
 JIT_STOREFIELD_VALUETYPE_start:
 	OPCODE_USE(JIT_STOREFIELD_VALUETYPE);
 	{
-		tMD_FieldDef *pFieldDef;
+		tMD_FieldDef* pFieldDef;
 		PTR pMem;
 
 		pFieldDef = (tMD_FieldDef*)GET_OP();
@@ -2784,7 +2783,7 @@ JIT_LOADFIELD_start:
 	OPCODE_USE(JIT_LOADFIELD);
 	// TODO: Optimize into LOADFIELD of different types O, INT32, INT64, F, etc...)
 	{
-		tMD_FieldDef *pFieldDef;
+		tMD_FieldDef* pFieldDef;
 
 		pFieldDef = (tMD_FieldDef*)GET_OP();
 		heapPtr = POP_O();
@@ -2808,11 +2807,11 @@ JIT_LOADFIELD_4_end:
 JIT_LOADFIELD_VALUETYPE_start:
 	OPCODE_USE(JIT_LOADFIELD_VALUETYPE);
 	{
-		tMD_FieldDef *pFieldDef;
+		tMD_FieldDef* pFieldDef;
 
 		u32Value = GET_OP(); // Get the size of the value-type on the eval stack
 		pFieldDef = (tMD_FieldDef*)GET_OP();
-		
+
 		// [Steve edit] The following line used to be:
 		//     pCurrentMethodState->stackOfs -= u32Value;
 		// ... but this seems to result in calculating the wrong pMem value and getting garbage results.
@@ -2820,7 +2819,7 @@ JIT_LOADFIELD_VALUETYPE_start:
 		// didn't update this method (because nothing in corlib reads fields from structs).
 		// I think the following line moves the stack pointer along correctly instead:
 		pCurEvalStack -= u32Value;
-		
+
 		//pMem = pEvalStack + pCurrentMethodState->stackOfs + pFieldDef->memOffset;
 		pMem = pCurEvalStack + pFieldDef->memOffset;
 		// It may not be a value-type, but this'll work anyway
@@ -2847,7 +2846,7 @@ JIT_STORESTATICFIELD_INTNATIVE_start: // only for 32-bit
 JIT_STORESTATICFIELD_PTR_start: // only for 32-bit
 	OPCODE_USE(JIT_STORESTATICFIELD_INT32);
 	{
-		tMD_FieldDef *pFieldDef;
+		tMD_FieldDef* pFieldDef;
 		PTR pMem;
 		U32 value;
 
@@ -2867,7 +2866,7 @@ JIT_STORESTATICFIELD_F64_start:
 JIT_STORESTATICFIELD_INT64_start:
 	OPCODE_USE(JIT_STORESTATICFIELD_INT64);
 	{
-		tMD_FieldDef *pFieldDef;
+		tMD_FieldDef* pFieldDef;
 		PTR pMem;
 		U64 value;
 
@@ -2884,7 +2883,7 @@ JIT_STORESTATICFIELD_INT64_end:
 JIT_STORESTATICFIELD_VALUETYPE_start:
 	OPCODE_USE(JIT_STORESTATICFIELD_VALUETYPE);
 	{
-		tMD_FieldDef *pFieldDef;
+		tMD_FieldDef* pFieldDef;
 		PTR pMem;
 
 		pFieldDef = (tMD_FieldDef*)GET_OP();
@@ -2912,8 +2911,8 @@ JIT_LOADSTATICFIELD_CHECKTYPEINIT_PTR_start: // Only for 32-bit
 loadStaticFieldStart:
 	OPCODE_USE(JIT_LOADSTATICFIELD_CHECKTYPEINIT_INT32);
 	{
-		tMD_FieldDef *pFieldDef;
-		tMD_TypeDef *pParentType;
+		tMD_FieldDef* pFieldDef;
+		tMD_TypeDef* pParentType;
 
 		pFieldDef = (tMD_FieldDef*)GET_OP();
 		pParentType = pFieldDef->pParentType;
@@ -2923,7 +2922,7 @@ loadStaticFieldStart:
 			pParentType->isTypeInitialised = 1;
 			// Initialise the type (if there is a static constructor)
 			if (pParentType->pStaticConstructor != NULL) {
-				tMethodState *pCallMethodState;
+				tMethodState* pCallMethodState;
 
 				// Call static constructor
 				// Need to re-run this instruction when we return from static constructor call
@@ -2964,7 +2963,7 @@ JIT_LOADSTATICFIELD_CHECKTYPEINIT_PTR_end:
 JIT_INIT_VALUETYPE_start:
 	OPCODE_USE(JIT_INIT_VALUETYPE);
 	{
-		tMD_TypeDef *pTypeDef;
+		tMD_TypeDef* pTypeDef;
 
 		pTypeDef = (tMD_TypeDef*)GET_OP();
 		pMem = POP_PTR();
@@ -2987,7 +2986,7 @@ JIT_BOX_F32_start:
 JIT_BOX_INTNATIVE_start:
 	OPCODE_USE(JIT_BOX_INT32);
 	{
-		tMD_TypeDef *pTypeDef;
+		tMD_TypeDef* pTypeDef;
 
 		pTypeDef = (tMD_TypeDef*)GET_OP();
 		heapPtr = Heap_AllocType(pTypeDef);
@@ -3002,9 +3001,9 @@ JIT_BOX_INTNATIVE_end:
 
 JIT_BOX_INT64_start:
 JIT_BOX_F64_start:
-OPCODE_USE(JIT_BOX_INT64);
+	OPCODE_USE(JIT_BOX_INT64);
 	{
-		tMD_TypeDef *pTypeDef = (tMD_TypeDef*)GET_OP();
+		tMD_TypeDef* pTypeDef = (tMD_TypeDef*)GET_OP();
 		heapPtr = Heap_AllocType(pTypeDef);
 		*(U64*)heapPtr = POP_U64();
 		PUSH_O(heapPtr);
@@ -3016,7 +3015,7 @@ JIT_BOX_F64_end:
 JIT_BOX_VALUETYPE_start:
 	OPCODE_USE(JIT_BOX_VALUETYPE);
 	{
-		tMD_TypeDef *pTypeDef;
+		tMD_TypeDef* pTypeDef;
 
 		pTypeDef = (tMD_TypeDef*)GET_OP();
 		heapPtr = Heap_AllocType(pTypeDef);
@@ -3040,7 +3039,7 @@ JIT_BOX_NULLABLE_start:
 	OPCODE_USE(JIT_BOX_NULLABLE);
 	{
 		// Get the underlying type of the nullable type
-		tMD_TypeDef *pType = (tMD_TypeDef*)GET_OP();
+		tMD_TypeDef* pType = (tMD_TypeDef*)GET_OP();
 
 		// Take the nullable type off the stack. The +4 is because the of the HasValue field (Bool, size = 4 bytes)
 		pCurEvalStack -= pType->stackSize + 4;
@@ -3061,7 +3060,7 @@ JIT_BOX_NULLABLE_end:
 JIT_UNBOX2VALUETYPE_start:
 	OPCODE_USE(JIT_UNBOX2VALUETYPE);
 	{
-		tMD_TypeDef *pTypeDef;
+		tMD_TypeDef* pTypeDef;
 		HEAP_PTR heapPtr;
 
 		heapPtr = POP_O();
@@ -3074,7 +3073,7 @@ JIT_UNBOX2VALUETYPE_end:
 JIT_UNBOX_NULLABLE_start:
 	OPCODE_USE(JIT_UNBOX_NULLABLE);
 	{
-		tMD_TypeDef *pTypeDef = (tMD_TypeDef*)GET_OP();
+		tMD_TypeDef* pTypeDef = (tMD_TypeDef*)GET_OP();
 		HEAP_PTR heapPtr;
 		heapPtr = POP_O();
 		if (heapPtr == NULL) {
@@ -3096,7 +3095,7 @@ JIT_UNBOX_NULLABLE_end:
 JIT_LOADTOKEN_TYPE_start:
 	OPCODE_USE(JIT_LOADTOKEN_TYPE);
 	{
-		tMD_TypeDef *pTypeDef;
+		tMD_TypeDef* pTypeDef;
 
 		pTypeDef = (tMD_TypeDef*)GET_OP();
 		// Push new valuetype onto evaluation stack
@@ -3108,7 +3107,7 @@ JIT_LOADTOKEN_TYPE_end:
 JIT_LOADTOKEN_FIELD_start:
 	OPCODE_USE(JIT_LOADTOKEN_FIELD);
 	{
-		tMD_FieldDef *pFieldDef;
+		tMD_FieldDef* pFieldDef;
 
 		pFieldDef = (tMD_FieldDef*)GET_OP();
 		// Push new valuetype onto evaluation stack - only works on static fields.
@@ -3126,16 +3125,16 @@ throwStart:
 	OPCODE_USE(JIT_THROW);
 	{
 		U32 i;
-		tExceptionHeader *pCatch;
-		tMethodState *pCatchMethodState;
-		tMD_TypeDef *pExType;
+		tExceptionHeader* pCatch;
+		tMethodState* pCatchMethodState;
+		tMD_TypeDef* pExType;
 
 		// Get the exception object
 		if (op == JIT_RETHROW) {
 			heapPtr = pThread->pCurrentExceptionObject;
 		} else {
 			heapPtr = POP_O();
-throwHeapPtr:
+		throwHeapPtr:
 			pThread->pCurrentExceptionObject = heapPtr;
 		}
 		SAVE_METHOD_STATE();
@@ -3143,14 +3142,14 @@ throwHeapPtr:
 		// Find any catch exception clauses; look in the complete call stack
 		pCatch = NULL;
 		pCatchMethodState = pCurrentMethodState;
-		for(;;) {
-			for (i=0; i<pCatchMethodState->pMethod->pJITted->numExceptionHandlers; i++) {
-				tExceptionHeader *pEx = &pCatchMethodState->pMethod->pJITted->pExceptionHeaders[i];
+		for (;;) {
+			for (i = 0; i < pCatchMethodState->pMethod->pJITted->numExceptionHandlers; i++) {
+				tExceptionHeader* pEx = &pCatchMethodState->pMethod->pJITted->pExceptionHeaders[i];
 				if (pEx->flags == COR_ILEXCEPTION_CLAUSE_EXCEPTION &&
 					pCatchMethodState->ipOffset - 1 >= pEx->tryStart &&
 					pCatchMethodState->ipOffset - 1 < pEx->tryEnd &&
 					Type_IsDerivedFromOrSame(pEx->u.pCatchTypeDef, pExType)) {
-					
+
 					// Found the correct catch clause to jump to
 					pCatch = pEx;
 					break;
@@ -3173,11 +3172,11 @@ throwHeapPtr:
 		pThread->pCatchExceptionHandler = pCatch;
 		// Have to use the pThread->pCatchMethodState, as we could be getting here from END_FINALLY
 		while (pCurrentMethodState != pThread->pCatchMethodState) {
-			tMethodState *pPrevState;
+			tMethodState* pPrevState;
 
-finallyUnwindStack:
-			for (i=pThread->nextFinallyUnwindStack; i<pCurrentMethodState->pMethod->pJITted->numExceptionHandlers; i++) {
-				tExceptionHeader *pEx;
+		finallyUnwindStack:
+			for (i = pThread->nextFinallyUnwindStack; i < pCurrentMethodState->pMethod->pJITted->numExceptionHandlers; i++) {
+				tExceptionHeader* pEx;
 
 				pEx = &pCurrentMethodState->pMethod->pJITted->pExceptionHeaders[i];
 				if (pEx->flags == COR_ILEXCEPTION_CLAUSE_FINALLY &&
@@ -3219,11 +3218,11 @@ JIT_LEAVE_start:
 	OPCODE_USE(JIT_LEAVE);
 	{
 		U32 i;
-		tExceptionHeader *pFinally;
+		tExceptionHeader* pFinally;
 
 		// Find any finally exception clauses
 		pFinally = NULL;
-		for (i=0; i<pJIT->numExceptionHandlers; i++) {
+		for (i = 0; i < pJIT->numExceptionHandlers; i++) {
 			if (pJIT->pExceptionHeaders[i].flags == COR_ILEXCEPTION_CLAUSE_FINALLY &&
 				pCurrentMethodState->ipOffset - 1 >= pJIT->pExceptionHeaders[i].tryStart &&
 				pCurrentMethodState->ipOffset - 1 < pJIT->pExceptionHeaders[i].tryEnd) {

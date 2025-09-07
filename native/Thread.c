@@ -33,22 +33,22 @@ int releaseBreakPoint = 0;
 int waitingOnBreakPoint = 0;
 int alwaysBreak = 0;
 
-static tThread *pAllThreads = NULL;
-static tThread *pCurrentThread;
+static tThread* pAllThreads = NULL;
+static tThread* pCurrentThread;
 
-U32 Internal_Debugger_Resume_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
-    if (releaseBreakPoint) {
-        releaseBreakPoint = 0;
-        waitingOnBreakPoint = 0;
-        return 1;
-    }
-    return 0;
+U32 Internal_Debugger_Resume_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall* pAsync) {
+	if (releaseBreakPoint) {
+		releaseBreakPoint = 0;
+		waitingOnBreakPoint = 0;
+		return 1;
+	}
+	return 0;
 }
 
 
 tThread* Thread() {
 	static U32 threadID = 0;
-	tThread *pThis;
+	tThread* pThis;
 
 	// Create thread and initial method state. This is allocated on the managed heap, and
 	// mark as undeletable. When the thread exits, it was marked as deletable.
@@ -77,18 +77,18 @@ tThread* Thread() {
 	return pThis;
 }
 
-void* Thread_StackAlloc(tThread *pThread, U32 size) {
-	tThreadStack *pStack = pThread->pThreadStack;
-	void *pAddr = pStack->memory + pStack->ofs;
+void* Thread_StackAlloc(tThread* pThread, U32 size) {
+	tThreadStack* pStack = pThread->pThreadStack;
+	void* pAddr = pStack->memory + pStack->ofs;
 #if _DEBUG
-	*(U32*)pAddr = 0xabababab;
+	* (U32*)pAddr = 0xabababab;
 	((U32*)pAddr)++;
 	pStack->ofs += 4;
 #endif
 	pStack->ofs += size;
 	if (pStack->ofs > THREADSTACK_CHUNK_SIZE) {
 		Crash("Thread-local stack is too large");
-	}
+}
 #if _DEBUG
 	memset(pAddr, 0xcd, size);
 	*(U32*)(((char*)pAddr) + size) = 0xfbfbfbfb;
@@ -97,8 +97,8 @@ void* Thread_StackAlloc(tThread *pThread, U32 size) {
 	return pAddr;
 }
 
-void Thread_StackFree(tThread *pThread, void *pAddr) {
-	tThreadStack *pStack = pThread->pThreadStack;
+void Thread_StackFree(tThread* pThread, void* pAddr) {
+	tThreadStack* pStack = pThread->pThreadStack;
 #if _DEBUG
 	((U32*)pAddr)--;
 	memset(pAddr, 0xfe, pStack->ofs - (U32)(((unsigned char*)pAddr) - pStack->memory));
@@ -106,7 +106,7 @@ void Thread_StackFree(tThread *pThread, void *pAddr) {
 	pStack->ofs = (U32)(((unsigned char*)pAddr) - pStack->memory);
 }
 
-void Thread_SetEntryPoint(tThread *pThis, tMetaData *pMetaData, IDX_TABLE entryPointToken, PTR params, U32 paramBytes) {
+void Thread_SetEntryPoint(tThread* pThis, tMetaData* pMetaData, IDX_TABLE entryPointToken, PTR params, U32 paramBytes) {
 	// Set up the initial MethodState
 	pThis->pCurrentMethodState = MethodState(pThis, pMetaData, entryPointToken, NULL);
 	// Insert initial parameters (if any)
@@ -115,10 +115,10 @@ void Thread_SetEntryPoint(tThread *pThis, tMetaData *pMetaData, IDX_TABLE entryP
 	}
 }
 
-static void Thread_Delete(tThread *pThis) {
-	tThreadStack *pStack = pThis->pThreadStack;
+static void Thread_Delete(tThread* pThis) {
+	tThreadStack* pStack = pThis->pThreadStack;
 	while (pStack != NULL) {
-		tThreadStack *pNextStack = pStack->pNext;
+		tThreadStack* pNextStack = pStack->pNext;
 		free(pStack);
 		pStack = pNextStack;
 	}
@@ -126,7 +126,7 @@ static void Thread_Delete(tThread *pThis) {
 }
 
 I32 Thread_Execute() {
-	tThread *pThread, *pPrevThread;
+	tThread* pThread, * pPrevThread;
 	U32 status;
 
 	pThread = pAllThreads;
@@ -138,10 +138,9 @@ I32 Thread_Execute() {
 	for (;;) {
 		U32 minSleepTime = 0xffffffff;
 		I32 threadExitValue;
+		status = JIT_Execute(pThread, 100);
 
-        status = JIT_Execute(pThread, 100);
-
-		if(!isRunning()) break;
+		if (!isRunning()) break;
 
 		switch (status) {
 		case THREAD_STATUS_EXIT:
@@ -150,7 +149,7 @@ I32 Thread_Execute() {
 			// Remove the current thread from the running threads list.
 			// Note that this list may have changed since before the call to JIT_Execute().
 			{
-				tThread **ppThread = &pAllThreads;
+				tThread** ppThread = &pAllThreads;
 				while (*ppThread != pThread) {
 					ppThread = &((*ppThread)->pNextThread);
 				}
@@ -165,14 +164,13 @@ I32 Thread_Execute() {
 			// like in a regular .NET runtime case. The application state is still there and we can make
 			// further calls into it to create new threads.
 			{
-				tThread *pThread = pAllThreads;
+				tThread* pThread = pAllThreads;
 				U32 canExit = 1;
 				while (pThread != NULL) {
 					if (
 						(!(pThread->state & THREADSTATE_BACKGROUND))
 						&& ((pThread->state & (~THREADSTATE_BACKGROUND)) != THREADSTATE_UNSTARTED)
-						&& ((pThread->state & (~THREADSTATE_BACKGROUND)) != THREADSTATE_SUSPENDED))
-					{
+						&& ((pThread->state & (~THREADSTATE_BACKGROUND)) != THREADSTATE_SUSPENDED)) {
 						canExit = 0;
 						break;
 					}
@@ -190,7 +188,7 @@ I32 Thread_Execute() {
 			break;
 		case THREAD_STATUS_ASYNC:
 			pThread->pAsync->startTime = msTime();
-			break;		
+			break;
 		}
 
 		// Move on to the next thread.
@@ -209,7 +207,7 @@ I32 Thread_Execute() {
 			}
 			if (pThread->pAsync != NULL) {
 				// Discover if whatever is being waited for is finished
-				tAsyncCall *pAsync = pThread->pAsync;
+				tAsyncCall* pAsync = pThread->pAsync;
 				if (pAsync->sleepTime >= 0) {
 					// This is a sleep
 					U64 nowTime = msTime();
@@ -222,27 +220,25 @@ I32 Thread_Execute() {
 					if ((U32)msSleepRemaining < minSleepTime) {
 						minSleepTime = msSleepRemaining;
 					}
-				}
-                else if (pThread->pAsync->checkFn == Internal_Debugger_Resume_Check) {
-                    U32 unblocked;
+				} else if (pThread->pAsync->checkFn == Internal_Debugger_Resume_Check) {
+					U32 unblocked;
 
-                    // Forced debugger break
-                    unblocked = pAsync->checkFn(NULL, NULL, NULL, pAsync);
-                    if (unblocked) {
-                        // The IO has unblocked, and the return value is ready.
-                        // So delete the async object.
-                        // TODO: The async->state object needs to be deleted somehow (maybe)
-                        free(pAsync);
-                        // And remove it from the thread
-                        pThread->pAsync = NULL;
-                        break;
-                    }
+					// Forced debugger break
+					unblocked = pAsync->checkFn(NULL, NULL, NULL, pAsync);
+					if (unblocked) {
+						// The IO has unblocked, and the return value is ready.
+						// So delete the async object.
+						// TODO: The async->state object needs to be deleted somehow (maybe)
+						free(pAsync);
+						// And remove it from the thread
+						pThread->pAsync = NULL;
+						break;
+					}
 
-                    return 0;
-                }
-                else {
+					return 0;
+				} else {
 					// This is blocking IO, or a lock
-					tMethodState *pMethodState = pThread->pCurrentMethodState;
+					tMethodState* pMethodState = pThread->pCurrentMethodState;
 					PTR pThis;
 					U32 thisOfs;
 					U32 unblocked;
@@ -273,16 +269,16 @@ I32 Thread_Execute() {
 			if (pThread == pPrevThread) {
 				// When it gets here, it means that all threads are currently blocked.
 				//printf("All blocked; sleep(%d)\n", minSleepTime);
-                // Execution needs to unwind if everything is blocked in javascript or it will
-                // hang the browser's main thread, we need to schedule a call back into this method at a later time
-                return minSleepTime;
+				// Execution needs to unwind if everything is blocked in javascript or it will
+				// hang the browser's main thread, we need to schedule a call back into this method at a later time
+				return minSleepTime;
 				// SleepMS(minSleepTime);
 			}
 		}
 	}
-    
+
 #if defined(__APPLE__) || defined(_WIN32)
-    return 0;
+	return 0;
 #endif
 }
 
@@ -290,12 +286,12 @@ tThread* Thread_GetCurrent() {
 	return pCurrentThread;
 }
 
-void Thread_GetHeapRoots(tHeapRoots *pHeapRoots) {
-	tThread *pThread;
+void Thread_GetHeapRoots(tHeapRoots* pHeapRoots) {
+	tThread* pThread;
 
 	pThread = pAllThreads;
 	while (pThread != NULL) {
-		tMethodState *pMethodState;
+		tMethodState* pMethodState;
 
 		pMethodState = pThread->pCurrentMethodState;
 		while (pMethodState != NULL) {
@@ -303,7 +299,7 @@ void Thread_GetHeapRoots(tHeapRoots *pHeapRoots) {
 			Heap_SetRoots(pHeapRoots, pMethodState->pEvalStack, pMethodState->pMethod->pJITted->maxStack);
 			// Put the params/locals on the roots
 			Heap_SetRoots(pHeapRoots, pMethodState->pParamsLocals,
-				pMethodState->pMethod->parameterStackSize+pMethodState->pMethod->pJITted->localsStackSize);
+				pMethodState->pMethod->parameterStackSize + pMethodState->pMethod->pJITted->localsStackSize);
 
 			pMethodState = pMethodState->pCaller;
 		}

@@ -43,7 +43,7 @@ typedef struct tHeapEntry_ tHeapEntry;
 
 struct tSync_ {
 	// The thread that holds this sync block
-	tThread *pThread;
+	tThread* pThread;
 	// The number of times this thread has entered the sync block
 	U32 count;
 
@@ -57,7 +57,7 @@ struct tSync_ {
 
 struct tHeapEntry_ {
 	// Left/right links in the heap binary tree
-	tHeapEntry *pLink[2];
+	tHeapEntry* pLink[2];
 	// The 'level' of this node. Leaf nodes have lowest level
 	U8 level;
 	// Used to mark that this node is still in use.
@@ -68,15 +68,15 @@ struct tHeapEntry_ {
 	// Set to 0 when the Finalizer has been run (or there is no Finalizer in the first place)
 	// Only set on types that have a Finalizer
 	U8 needToFinalize;
-	
+
 	// unused
 	U8 padding;
 
 	// The type in this heap entry
-	tMD_TypeDef *pTypeDef;
+	tMD_TypeDef* pTypeDef;
 
 	// Used for locking sync, and tracking WeakReference that point to this object
-	tSync *pSync;
+	tSync* pSync;
 
 	// The user memory
 	U8 memory[0];
@@ -85,10 +85,10 @@ struct tHeapEntry_ {
 #define GET_HEAPENTRY(heapObj) ((tHeapEntry*)(heapObj - sizeof(tHeapEntry)))
 
 // Forward ref
-static void RemoveWeakRefTarget(tHeapEntry *pHeapEntry, U32 removeLongRefs);
+static void RemoveWeakRefTarget(tHeapEntry* pHeapEntry, U32 removeLongRefs);
 
-static tHeapEntry *pHeapTreeRoot;
-static tHeapEntry *nil;
+static tHeapEntry* pHeapTreeRoot;
+static tHeapEntry* nil;
 #define MAX_TREE_DEPTH 40
 
 // The total heap memory currently allocated
@@ -123,8 +123,8 @@ void Heap_Init() {
 // Get the size of a heap entry, NOT including the header
 // This works by returning the size of the type, unless the type is an array or a string,
 // which are the only two types that can have variable sizes
-static U32 GetSize(tHeapEntry *pHeapEntry) {
-	tMD_TypeDef *pType = pHeapEntry->pTypeDef;
+static U32 GetSize(tHeapEntry* pHeapEntry) {
+	tMD_TypeDef* pType = pHeapEntry->pTypeDef;
 	if (pType == types[TYPE_SYSTEM_STRING]) {
 		// If it's a string, return the string length in bytes
 		return SystemString_GetNumBytes((HEAP_PTR)(pHeapEntry + 1));
@@ -137,9 +137,9 @@ static U32 GetSize(tHeapEntry *pHeapEntry) {
 	return pType->instanceMemSize;
 }
 
-static tHeapEntry* TreeSkew(tHeapEntry *pRoot) {
+static tHeapEntry* TreeSkew(tHeapEntry* pRoot) {
 	if (pRoot->pLink[0]->level == pRoot->level && pRoot->level != 0) {
-		tHeapEntry *pSave = pRoot->pLink[0];
+		tHeapEntry* pSave = pRoot->pLink[0];
 		pRoot->pLink[0] = pSave->pLink[1];
 		pSave->pLink[1] = pRoot;
 		pRoot = pSave;
@@ -147,9 +147,9 @@ static tHeapEntry* TreeSkew(tHeapEntry *pRoot) {
 	return pRoot;
 }
 
-static tHeapEntry* TreeSplit(tHeapEntry *pRoot) {
+static tHeapEntry* TreeSplit(tHeapEntry* pRoot) {
 	if (pRoot->pLink[1]->pLink[1]->level == pRoot->level && pRoot->level != 0) {
-		tHeapEntry *pSave = pRoot->pLink[1];
+		tHeapEntry* pSave = pRoot->pLink[1];
 		pRoot->pLink[1] = pSave->pLink[0];
 		pSave->pLink[0] = pRoot;
 		pRoot = pSave;
@@ -158,15 +158,15 @@ static tHeapEntry* TreeSplit(tHeapEntry *pRoot) {
 	return pRoot;
 }
 
-static tHeapEntry* TreeInsert(tHeapEntry *pRoot, tHeapEntry *pEntry) {
+static tHeapEntry* TreeInsert(tHeapEntry* pRoot, tHeapEntry* pEntry) {
 	if (pRoot == nil) {
 		pRoot = pEntry;
 		pRoot->level = 1;
 		pRoot->pLink[0] = pRoot->pLink[1] = nil;
 		pRoot->marked = 0;
 	} else {
-		tHeapEntry *pNode = pHeapTreeRoot;
-		tHeapEntry *pUp[MAX_TREE_DEPTH];
+		tHeapEntry* pNode = pHeapTreeRoot;
+		tHeapEntry* pUp[MAX_TREE_DEPTH];
 		I32 top = 0, dir;
 		// Find leaf position to insert into tree. This first step is unbalanced
 		for (;;) {
@@ -185,12 +185,12 @@ static tHeapEntry* TreeInsert(tHeapEntry *pRoot, tHeapEntry *pEntry) {
 		// Balance the tree
 		while (--top >= 0) {
 			if (top != 0) {
-				dir = pUp[top-1]->pLink[1] == pUp[top];
+				dir = pUp[top - 1]->pLink[1] == pUp[top];
 			}
 			pUp[top] = TreeSkew(pUp[top]);
 			pUp[top] = TreeSplit(pUp[top]);
 			if (top != 0) {
-				pUp[top-1]->pLink[dir] = pUp[top];
+				pUp[top - 1]->pLink[dir] = pUp[top];
 			} else {
 				pRoot = pUp[0];
 			}
@@ -199,13 +199,13 @@ static tHeapEntry* TreeInsert(tHeapEntry *pRoot, tHeapEntry *pEntry) {
 	return pRoot;
 }
 
-static tHeapEntry* TreeRemove(tHeapEntry *pRoot, tHeapEntry *pDelete) {
+static tHeapEntry* TreeRemove(tHeapEntry* pRoot, tHeapEntry* pDelete) {
 	if (pRoot != nil) {
 		if (pRoot == pDelete) {
 			if (pRoot->pLink[0] != nil && pRoot->pLink[1] != nil) {
-				tHeapEntry *pL0;
+				tHeapEntry* pL0;
 				U8 l;
-				tHeapEntry *pHeir = pRoot->pLink[0], **ppHeirLink = &pHeir->pLink[0];
+				tHeapEntry* pHeir = pRoot->pLink[0], ** ppHeirLink = &pHeir->pLink[0];
 				while (pHeir->pLink[1] != nil) {
 					ppHeirLink = &pHeir->pLink[1];
 					pHeir = pHeir->pLink[1];
@@ -236,7 +236,7 @@ static tHeapEntry* TreeRemove(tHeapEntry *pRoot, tHeapEntry *pDelete) {
 		}
 	}
 
-	if (pRoot->pLink[0]->level < pRoot->level-1 || pRoot->pLink[1]->level < pRoot->level-1) {
+	if (pRoot->pLink[0]->level < pRoot->level - 1 || pRoot->pLink[1]->level < pRoot->level - 1) {
 		if (pRoot->pLink[1]->level > --pRoot->level) {
 			pRoot->pLink[1]->level = pRoot->level;
 		}
@@ -252,10 +252,10 @@ static tHeapEntry* TreeRemove(tHeapEntry *pRoot, tHeapEntry *pDelete) {
 
 static void GarbageCollect() {
 	tHeapRoots heapRoots;
-	tHeapEntry *pNode;
-	tHeapEntry *pUp[MAX_TREE_DEPTH * 2];
+	tHeapEntry* pNode;
+	tHeapEntry* pUp[MAX_TREE_DEPTH * 2];
 	I32 top;
-	tHeapEntry *pToDelete = NULL;
+	tHeapEntry* pToDelete = NULL;
 	U32 orgHeapSize = trackHeapSize;
 	U32 orgNumNodes = numNodes;
 #ifdef DIAG_GC
@@ -277,11 +277,11 @@ static void GarbageCollect() {
 
 	// Mark phase
 	while (heapRoots.num > 0) {
-		tHeapRootEntry *pRootsEntry;
+		tHeapRootEntry* pRootsEntry;
 		U32 i;
 		U32 moreRootsAdded = 0;
 		U32 rootsEntryNumPointers;
-		void **pRootsEntryMem;
+		void** pRootsEntryMem;
 
 		// Get a piece of memory off the list of heap memory roots.
 		pRootsEntry = &heapRoots.pHeapEntries[heapRoots.num - 1];
@@ -291,8 +291,8 @@ static void GarbageCollect() {
 		pRootsEntry->numPointers = 0;
 		pRootsEntry->pMem = NULL;
 		// Iterate through all pointers in it
-		for (i=0; i<rootsEntryNumPointers; i++) {
-			void *pMemRef = pRootsEntryMem[i];
+		for (i = 0; i < rootsEntryNumPointers; i++) {
+			void* pMemRef = pRootsEntryMem[i];
 			// Quick escape for known non-memory 
 			if (pMemRef == NULL) {
 				continue;
@@ -312,11 +312,11 @@ static void GarbageCollect() {
 					// If it's already marked, then don't do anything.
 					// It it's not marked, then add all of its memory to the roots, and mark it.
 					if (pNode->marked == 0) {
-						tMD_TypeDef *pType = pNode->pTypeDef;
+						tMD_TypeDef* pType = pNode->pTypeDef;
 
 						// Not yet marked, so mark it, and add it to heap roots.
 						pNode->marked = 1;
-	
+
 						// Don't look at the contents of strings, arrays of primitive types, or WeakReferences
 						if (pType->stackType == EVALSTACK_O ||
 							pType->stackType == EVALSTACK_VALUETYPE ||
@@ -324,12 +324,12 @@ static void GarbageCollect() {
 
 							if (pType != types[TYPE_SYSTEM_STRING] &&
 								(!TYPE_ISARRAY(pType) ||
-								pType->pArrayElementType->stackType == EVALSTACK_O ||
-								pType->pArrayElementType->stackType == EVALSTACK_VALUETYPE ||
-								pType->pArrayElementType->stackType == EVALSTACK_PTR)) {
+									pType->pArrayElementType->stackType == EVALSTACK_O ||
+									pType->pArrayElementType->stackType == EVALSTACK_VALUETYPE ||
+									pType->pArrayElementType->stackType == EVALSTACK_PTR)) {
 
 								if (pType != types[TYPE_SYSTEM_WEAKREFERENCE]) {
-									Heap_SetRoots(&heapRoots,pNode->memory, GetSize(pNode));
+									Heap_SetRoots(&heapRoots, pNode->memory, GetSize(pNode));
 									moreRootsAdded = 1;
 								}
 							}
@@ -397,7 +397,7 @@ static void GarbageCollect() {
 
 	// Delete all unused memory nodes.
 	while (pToDelete != NULL) {
-		tHeapEntry *pThis = pToDelete;
+		tHeapEntry* pThis = pToDelete;
 		pToDelete = (tHeapEntry*)(pToDelete->pSync);
 		pHeapTreeRoot = TreeRemove(pHeapTreeRoot, pThis);
 		numNodes--;
@@ -433,8 +433,8 @@ U32 Heap_GetTotalMemory() {
 	return trackHeapSize;
 }
 
-void Heap_SetRoots(tHeapRoots *pHeapRoots, void *pRoots, U32 sizeInBytes) {
-	tHeapRootEntry *pRootEntry;
+void Heap_SetRoots(tHeapRoots* pHeapRoots, void* pRoots, U32 sizeInBytes) {
+	tHeapRootEntry* pRootEntry;
 
 	Assert((sizeInBytes & 0x3) == 0);
 	if (pHeapRoots->num >= pHeapRoots->capacity) {
@@ -446,8 +446,8 @@ void Heap_SetRoots(tHeapRoots *pHeapRoots, void *pRoots, U32 sizeInBytes) {
 	pRootEntry->pMem = pRoots;
 }
 
-HEAP_PTR Heap_Alloc(tMD_TypeDef *pTypeDef, U32 size) {
-	tHeapEntry *pHeapEntry;
+HEAP_PTR Heap_Alloc(tMD_TypeDef* pTypeDef, U32 size) {
+	tHeapEntry* pHeapEntry;
 	U32 totalSize;
 
 	totalSize = sizeof(tHeapEntry) + size;
@@ -479,27 +479,27 @@ HEAP_PTR Heap_Alloc(tMD_TypeDef *pTypeDef, U32 size) {
 	return pHeapEntry->memory;
 }
 
-HEAP_PTR Heap_AllocType(tMD_TypeDef *pTypeDef) {
+HEAP_PTR Heap_AllocType(tMD_TypeDef* pTypeDef) {
 	//printf("Heap_AllocType('%s')\n", pTypeDef->name);
 	return Heap_Alloc(pTypeDef, pTypeDef->instanceMemSize);
 }
 
 tMD_TypeDef* Heap_GetType(HEAP_PTR heapEntry) {
-	tHeapEntry *pHeapEntry = GET_HEAPENTRY(heapEntry);
+	tHeapEntry* pHeapEntry = GET_HEAPENTRY(heapEntry);
 	return pHeapEntry->pTypeDef;
 }
 
 void Heap_MakeUndeletable(HEAP_PTR heapEntry) {
-	tHeapEntry *pHeapEntry = GET_HEAPENTRY(heapEntry);
+	tHeapEntry* pHeapEntry = GET_HEAPENTRY(heapEntry);
 	pHeapEntry->marked = 0xff;
 }
 
 void Heap_MakeDeletable(HEAP_PTR heapEntry) {
-	tHeapEntry *pHeapEntry = GET_HEAPENTRY(heapEntry);
+	tHeapEntry* pHeapEntry = GET_HEAPENTRY(heapEntry);
 	pHeapEntry->marked = 0;
 }
 
-HEAP_PTR Heap_Box(tMD_TypeDef *pType, PTR pMem) {
+HEAP_PTR Heap_Box(tMD_TypeDef* pType, PTR pMem) {
 	HEAP_PTR boxed;
 
 	boxed = Heap_AllocType(pType);
@@ -509,7 +509,7 @@ HEAP_PTR Heap_Box(tMD_TypeDef *pType, PTR pMem) {
 }
 
 HEAP_PTR Heap_Clone(HEAP_PTR obj) {
-	tHeapEntry *pObj = GET_HEAPENTRY(obj);
+	tHeapEntry* pObj = GET_HEAPENTRY(obj);
 	HEAP_PTR clone;
 	U32 size = GetSize(pObj);
 
@@ -519,16 +519,16 @@ HEAP_PTR Heap_Clone(HEAP_PTR obj) {
 	return clone;
 }
 
-static tSync* EnsureSync(tHeapEntry *pHeapEntry) {
+static tSync* EnsureSync(tHeapEntry* pHeapEntry) {
 	if (pHeapEntry->pSync == NULL) {
-		tSync *pSync = TMALLOC(tSync);
+		tSync* pSync = TMALLOC(tSync);
 		memset(pSync, 0, sizeof(tSync));
 		pHeapEntry->pSync = pSync;
 	}
 	return pHeapEntry->pSync;
 }
 
-static void DeleteSync(tHeapEntry *pHeapEntry) {
+static void DeleteSync(tHeapEntry* pHeapEntry) {
 	if (pHeapEntry->pSync != NULL) {
 		if (pHeapEntry->pSync->count == 0 && pHeapEntry->pSync->weakRef == NULL) {
 			free(pHeapEntry->pSync);
@@ -540,9 +540,9 @@ static void DeleteSync(tHeapEntry *pHeapEntry) {
 // Return 1 if lock succesfully got
 // Return 0 if couldn't get the lock this time
 U32 Heap_SyncTryEnter(HEAP_PTR obj) {
-	tHeapEntry *pHeapEntry = GET_HEAPENTRY(obj);
-	tThread *pThread = Thread_GetCurrent();
-	tSync *pSync;
+	tHeapEntry* pHeapEntry = GET_HEAPENTRY(obj);
+	tThread* pThread = Thread_GetCurrent();
+	tSync* pSync;
 
 	pSync = EnsureSync(pHeapEntry);
 	if (pSync->pThread == NULL) {
@@ -560,8 +560,8 @@ U32 Heap_SyncTryEnter(HEAP_PTR obj) {
 // Returns 1 if all is OK
 // Returns 0 if the wrong thread is releasing the sync, or if no thread hold the sync
 U32 Heap_SyncExit(HEAP_PTR obj) {
-	tHeapEntry *pHeapEntry = GET_HEAPENTRY(obj);
-	tThread *pThread = Thread_GetCurrent();
+	tHeapEntry* pHeapEntry = GET_HEAPENTRY(obj);
+	tThread* pThread = Thread_GetCurrent();
 	if (pHeapEntry->pSync == NULL) {
 		return 0;
 	}
@@ -574,14 +574,14 @@ U32 Heap_SyncExit(HEAP_PTR obj) {
 	return 1;
 }
 
-static void RemoveWeakRefTarget(tHeapEntry *pTarget, U32 removeLongRefs) {
+static void RemoveWeakRefTarget(tHeapEntry* pTarget, U32 removeLongRefs) {
 	SystemWeakReference_TargetGone(&pTarget->pSync->weakRef, removeLongRefs);
 }
 
 // Returns the previous first weak-ref in target targetted by weakref
 HEAP_PTR Heap_SetWeakRefTarget(HEAP_PTR target, HEAP_PTR weakRef) {
-	tHeapEntry *pTarget = GET_HEAPENTRY(target);
-	tSync *pSync;
+	tHeapEntry* pTarget = GET_HEAPENTRY(target);
+	tSync* pSync;
 	HEAP_PTR prevWeakRef;
 
 	pSync = EnsureSync(pTarget);
@@ -591,11 +591,11 @@ HEAP_PTR Heap_SetWeakRefTarget(HEAP_PTR target, HEAP_PTR weakRef) {
 }
 
 HEAP_PTR* Heap_GetWeakRefAddress(HEAP_PTR target) {
-	tHeapEntry *pTarget = GET_HEAPENTRY(target);
+	tHeapEntry* pTarget = GET_HEAPENTRY(target);
 	return &pTarget->pSync->weakRef;
 }
 
 void Heap_RemovedWeakRefTarget(HEAP_PTR target) {
-	tHeapEntry *pTarget = GET_HEAPENTRY(target);
+	tHeapEntry* pTarget = GET_HEAPENTRY(target);
 	DeleteSync(pTarget);
 }
