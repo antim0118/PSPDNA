@@ -10,6 +10,21 @@
         "sdl_config.h": "c",
         "sdl_ttf.h": "c",
         "pspkernel.h": "c",
-        "pspctrl.h": "c"
-    }
+        "pspctrl.h": "c",
+        "pspdisplay.h": "c",
+        "pspdebug.h": "c",
+        "system.net.sockets.socket.h": "c",
+        "psp.basicgraphics.h": "c",
+        "compat.h": "c",
+        "psp.graphics.h": "c",
+        "glib2d.h": "c",
+        "system.string.h": "c"
+    },
+    "C_Cpp.clang_format_style": "Mozilla",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.block": "sameLine",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.function": "sameLine",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.lambda": "sameLine",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.namespace": "sameLine",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "sameLine",
+    "C_Cpp.vcFormat.newLine.beforeElse": false
 }

@@ -24,11 +24,11 @@
         {
             "name": "psp-win10",
             "includePath": [
-                "${workspaceFolder}/**",
-                "C:/pspsdk/psp/include",
-                "C:/pspsdk/psp/sdk/include",
-                "C:/pspsdk/i686-pc-mingw32/psp/include",
-                "C:/pspsdk/lib/gcc/psp/8.2.0/include"
+                "/home/antim/pspdev/include",
+                "/home/antim/pspdev/psp/include",
+                "/home/antim/pspdev/psp/sdk/include",
+                "${default}",
+                "${workspaceFolder}/**"
             ],
             "defines": [
                 "_DEBUG",
@@ -36,7 +36,7 @@
                 "_UNICODE",
                 "__PSP__"
             ],
-            "compilerPath": "C:/pspsdk/bin/psp-gcc.exe",
+            "compilerPath": "/home/antim/pspdev/bin/psp-gcc",
             "cStandard": "c11",
             "cppStandard": "c++14",
             "intelliSenseMode": "gcc-x64",
